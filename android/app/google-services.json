@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1072437987168",
+    "project_id": "shop-be2cb",
+    "storage_bucket": "shop-be2cb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1072437987168:android:ed975170a08793e7a6c005",
+        "android_client_info": {
+          "package_name": "com.once.food_delivery"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKAoulCaMCIok1t56RLnepkjYtlHOeYuI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
