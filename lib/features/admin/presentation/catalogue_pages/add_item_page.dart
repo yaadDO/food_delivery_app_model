@@ -4,7 +4,6 @@ import 'package:food_delivery/features/catalogue/domain/entities/catalog_item.da
 import 'package:food_delivery/features/catalogue/domain/entities/category.dart';
 import 'package:food_delivery/features/catalogue/presentation/cubits/catalog_cubit.dart';
 
-
 class AddItemPage extends StatefulWidget {
   final Category category;
 

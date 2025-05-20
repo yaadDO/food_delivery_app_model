@@ -1,7 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/features/catalogue/data/firebase_catalog_repo.dart';
-import 'package:food_delivery/features/catalogue/presentation/components/category_card.dart';
 import 'package:food_delivery/features/catalogue/presentation/cubits/catalog_cubit.dart';
 import 'package:food_delivery/features/catalogue/presentation/pages/category_items_page.dart';
 import 'package:food_delivery/features/home/presentation/components/home_catagory_card.dart';
@@ -10,6 +10,11 @@ import 'package:food_delivery/features/promo/presentation/components/promo_item_
 import 'package:food_delivery/features/promo/presentation/cubit/promo_cubit.dart';
 import 'package:food_delivery/features/promo/presentation/pages/promo_page_detail.dart';
 import 'package:food_delivery/features/search/presentation/pages/search_page.dart';
+import '../../../catalogue/presentation/components/item_card.dart';
+import '../../../catalogue/presentation/pages/item_page_detail.dart';
+import '../../../profile/data/firebase_profile_repo.dart';
+import '../../../profile/presentation/cubits/profile_cubit.dart';
+import '../../../profile/presentation/cubits/profile_states.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -24,6 +29,17 @@ class HomePage extends StatelessWidget {
         BlocProvider(
           create: (context) => PromoCubit(FirebasePromoRepo())..loadItems(),
         ),
+        BlocProvider(
+          create: (context) {
+            final cubit = ProfileCubit(profileRepo: FirebaseProfileRepo());
+            // Fetch profile if user is logged in
+            final user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              cubit.fetchUserProfile(user.uid);
+            }
+            return cubit;
+          },
+        ),
       ],
       child: Scaffold(
         body: SingleChildScrollView(
@@ -33,11 +49,23 @@ class HomePage extends StatelessWidget {
               _buildAppHeader(context),
               _buildCategoriesSection(context),
               _buildSalesSection(context),
+              _buildMenuSection(context),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good morning';
+    } else if (hour < 17) {
+      return 'Good afternoon';
+    } else {
+      return 'Good evening';
+    }
   }
 
   Widget _buildAppHeader(BuildContext context) {
@@ -46,15 +74,26 @@ class HomePage extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            "Hello y/n",
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.location_on),
-            onPressed: () {},
+          BlocBuilder<ProfileCubit, ProfileState>(
+            builder: (context, state) {
+              final greeting = _getGreeting();
+              String userName = 'there'; // Default name
+
+              if (state is ProfileLoaded) {
+                userName = state.profileUser.name.isNotEmpty
+                    ? state.profileUser.name
+                    : 'there';
+              } else if (state is ProfileError) {
+                userName = 'there';
+              }
+
+              return Text(
+                "$greeting, $userName",
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.search),
@@ -67,8 +106,6 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
-
-
 
   Widget _buildCategoriesSection(BuildContext context) {
     return Column(
@@ -83,10 +120,10 @@ class HomePage extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         SizedBox(
-          height: 130, // Increased height to accommodate text
+          height: 200,
           child: BlocBuilder<CatalogCubit, CatalogState>(
             builder: (context, state) {
-              if (state is CatalogLoaded) {
+              if (state is CatalogDataLoaded) {
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.only(left: 20),
@@ -176,7 +213,7 @@ class HomePage extends StatelessWidget {
           ),
           BlocBuilder<CatalogCubit, CatalogState>(
             builder: (context, state) {
-              if (state is CatalogLoaded) {
+              if (state is CatalogDataLoaded) {
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -186,15 +223,15 @@ class HomePage extends StatelessWidget {
                     mainAxisSpacing: 10,
                     childAspectRatio: 0.75,
                   ),
-                  itemCount: state.categories.length,
+                  itemCount: state.allItems.length,
                   itemBuilder: (context, index) {
-                    final category = state.categories[index];
-                    return CategoryCard(
-                      category: category,
+                    final item = state.allItems[index];
+                    return ItemCard(
+                      item: item,
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => CategoryItemsPage(category: category),
+                          builder: (context) => ItemDetailPage(item: item),
                         ),
                       ),
                     );

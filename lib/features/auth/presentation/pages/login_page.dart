@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:food_delivery/features/admin/presentation/catalogue_pages/AdminCatalogPage.dart';
 import 'package:lottie/lottie.dart';
+import '../../../admin/presentation/home/admin_home_page.dart';
 import '../components/my_button.dart';
 import '../components/my_text_field.dart';
 import '../cubits/auth_cubit.dart';
@@ -200,7 +200,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const AdminCatalogPage()));
+                          builder: (context) => const AdminHomePage()));
                 },
                 child: Text(
                   'Admin Login',

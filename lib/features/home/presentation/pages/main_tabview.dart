@@ -30,7 +30,7 @@ class _NavBarState extends State<NavBar> {
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.purpleAccent,
+        selectedItemColor: Colors.deepOrange,
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(

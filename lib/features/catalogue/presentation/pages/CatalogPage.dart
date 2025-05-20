@@ -19,7 +19,7 @@ class CatalogPage extends StatelessWidget {
             if (state is CatalogLoading) {
               return const Center(child: CircularProgressIndicator());
             }
-            if (state is CatalogLoaded) {
+            if (state is CatalogDataLoaded) { // Changed from CatalogLoaded
               return AnimationLimiter(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 30.0),
@@ -27,11 +27,11 @@ class CatalogPage extends StatelessWidget {
                     physics: const BouncingScrollPhysics(),
                     slivers: [
                       SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0), // Reduced horizontal padding
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                                 (context, index) {
-                              final category = state.categories[index];
+                              final category = state.categories[index]; // Now uses CatalogDataLoaded
                               return AnimationConfiguration.staggeredList(
                                 position: index,
                                 duration: const Duration(milliseconds: 500),
@@ -39,8 +39,8 @@ class CatalogPage extends StatelessWidget {
                                   verticalOffset: 50.0,
                                   child: FadeInAnimation(
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(  // Add vertical spacing here
-                                        horizontal: 8.0,  // Reduced card horizontal padding
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0,
                                         vertical: 8.0,
                                       ),
                                       child: CategoryCard(

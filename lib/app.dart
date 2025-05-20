@@ -20,6 +20,7 @@ import 'package:food_delivery/features/search/presentation/cubits/search_cubit.d
 import 'package:food_delivery/features/themes/themes_cubit.dart';
 
 import 'features/admin/presentation/catalogue_pages/AdminCatalogPage.dart';
+import 'features/admin/presentation/home/admin_home_page.dart';
 import 'features/chat/data/firebase_chat_repo.dart';
 import 'features/chat/presentation/cubit/chat_cubit.dart';
 
@@ -94,7 +95,7 @@ class _MyAppState extends State<MyApp> {
               if (authState is Unauthenticated) return const WelcomeView();
               if (authState is Authenticated) {
                 // Redirect admins to admin page
-                if (authState.isAdmin) return const AdminCatalogPage();
+                if (authState.isAdmin) return const AdminHomePage();
                 // Regular users go to main app
                 return const NavBar();
               }

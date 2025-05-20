@@ -38,7 +38,7 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
           if (state is CatalogError) {
             return Center(child: Text(state.message));
           }
-          if (state is CatalogLoaded) {
+          if (state is CatalogDataLoaded) {
             final category = state.categories.firstWhere(
                   (c) => c.id == widget.category.id,
               orElse: () => Category(id: '', name: '', imageUrl: ''),
@@ -72,6 +72,7 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _navigateToAddItem(context),
         child: const Icon(Icons.add),
+        backgroundColor: Colors.red,
       ),
     );
   }

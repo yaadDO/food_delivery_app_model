@@ -36,7 +36,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
           if (state is CatalogError) {
             return Center(child: Text(state.message));
           }
-          if (state is CatalogLoaded) {
+          if (state is CatalogDataLoaded) { // Changed from CatalogLoaded
             final category = state.categories.firstWhere(
                   (c) => c.id == widget.category.id,
               orElse: () => Category(id: '', name: '', imageUrl: ''),
@@ -67,14 +67,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
           return Container();
         },
       ),
-
     );
-  }
-
-
-
-  void _navigateToEditCategory(BuildContext context) {
-    // Implement category editing navigation
   }
 
   void _navigateToItemDetail(BuildContext context, CatalogItem item) {
@@ -86,4 +79,3 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
     );
   }
 }
-

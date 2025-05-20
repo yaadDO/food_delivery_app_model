@@ -6,15 +6,14 @@ class CatalogInitial extends CatalogState {}
 
 class CatalogLoading extends CatalogState {}
 
-class CatalogLoaded extends CatalogState {
+class CatalogDataLoaded extends CatalogState {
   final List<Category> categories;
+  final List<CatalogItem> allItems;
 
-  CatalogLoaded(this.categories);
+  CatalogDataLoaded(this.categories, this.allItems);
 }
 
 class CatalogError extends CatalogState {
   final String message;
-
   CatalogError(this.message);
 }
-

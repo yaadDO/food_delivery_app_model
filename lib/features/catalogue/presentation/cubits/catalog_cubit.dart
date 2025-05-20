@@ -14,7 +14,8 @@ class CatalogCubit extends Cubit<CatalogState> {
     emit(CatalogLoading());
     try {
       final categories = await catalogRepo.getCategories();
-      emit(CatalogLoaded(categories));
+      final items = await catalogRepo.getAllCatalogItems();
+      emit(CatalogDataLoaded(categories, items));
     } catch (e) {
       emit(CatalogError(e.toString()));
     }
@@ -33,10 +34,10 @@ class CatalogCubit extends Cubit<CatalogState> {
     try {
       await catalogRepo.updateCategory(category);
       final currentState = state;
-      if (currentState is CatalogLoaded) {
+      if (currentState is CatalogDataLoaded) { // Changed from CatalogLoaded
         final updatedCategories = currentState.categories.map((c) =>
         c.id == category.id ? category : c).toList();
-        emit(CatalogLoaded(updatedCategories));
+        emit(CatalogDataLoaded(updatedCategories, currentState.allItems)); // Updated
       }
     } catch (e) {
       emit(CatalogError(e.toString()));
@@ -47,10 +48,10 @@ class CatalogCubit extends Cubit<CatalogState> {
     try {
       await catalogRepo.deleteCategory(categoryId);
       final currentState = state;
-      if (currentState is CatalogLoaded) {
+      if (currentState is CatalogDataLoaded) { // Changed
         final updatedCategories = currentState.categories
             .where((c) => c.id != categoryId).toList();
-        emit(CatalogLoaded(updatedCategories));
+        emit(CatalogDataLoaded(updatedCategories, currentState.allItems)); // Updated
       }
     } catch (e) {
       emit(CatalogError(e.toString()));
@@ -58,19 +59,18 @@ class CatalogCubit extends Cubit<CatalogState> {
   }
 
   Future<void> loadItemsForCategory(String categoryId) async {
-    final previousState = state; // Capture the state before emitting loading
+    final previousState = state;
     emit(CatalogLoading());
     try {
       final items = await catalogRepo.getItemsForCategory(categoryId);
-      if (previousState is CatalogLoaded) {
+      if (previousState is CatalogDataLoaded) { // Changed
         final updatedCategories = previousState.categories.map((category) {
           return category.id == categoryId
               ? category.copyWith(items: items)
               : category;
         }).toList();
-        emit(CatalogLoaded(updatedCategories));
+        emit(CatalogDataLoaded(updatedCategories, previousState.allItems)); // Updated
       } else {
-        // Handle unexpected state or reload categories
         await loadCategories();
       }
     } catch (e) {
@@ -82,16 +82,17 @@ class CatalogCubit extends Cubit<CatalogState> {
     try {
       final newItem = await catalogRepo.addItem(item);
       final currentState = state;
-      if (currentState is CatalogLoaded) {
+      if (currentState is CatalogDataLoaded) { // Changed
+        // Update both categories and items
         final updatedCategories = currentState.categories.map((category) {
           if (category.id == newItem.categoryId) {
-            return category.copyWith(
-                items: [...category.items, newItem]
-            );
+            return category.copyWith(items: [...category.items, newItem]);
           }
           return category;
         }).toList();
-        emit(CatalogLoaded(updatedCategories));
+
+        final updatedItems = [...currentState.allItems, newItem];
+        emit(CatalogDataLoaded(updatedCategories, updatedItems)); // Updated
       }
     } catch (e) {
       emit(CatalogError(e.toString()));
@@ -102,7 +103,7 @@ class CatalogCubit extends Cubit<CatalogState> {
     try {
       await catalogRepo.updateItem(item);
       final currentState = state;
-      if (currentState is CatalogLoaded) {
+      if (currentState is CatalogDataLoaded) { // Changed
         final updatedCategories = currentState.categories.map((category) {
           if (category.id == item.categoryId) {
             final updatedItems = category.items.map((i) =>
@@ -111,7 +112,10 @@ class CatalogCubit extends Cubit<CatalogState> {
           }
           return category;
         }).toList();
-        emit(CatalogLoaded(updatedCategories));
+
+        final updatedAllItems = currentState.allItems.map((i) =>
+        i.id == item.id ? item : i).toList();
+        emit(CatalogDataLoaded(updatedCategories, updatedAllItems)); // Updated
       }
     } catch (e) {
       emit(CatalogError(e.toString()));
@@ -122,7 +126,7 @@ class CatalogCubit extends Cubit<CatalogState> {
     try {
       await catalogRepo.deleteItem(itemId);
       final currentState = state;
-      if (currentState is CatalogLoaded) {
+      if (currentState is CatalogDataLoaded) { // Changed
         final updatedCategories = currentState.categories.map((category) {
           if (category.id == categoryId) {
             final updatedItems = category.items
@@ -131,12 +135,25 @@ class CatalogCubit extends Cubit<CatalogState> {
           }
           return category;
         }).toList();
-        emit(CatalogLoaded(updatedCategories));
+
+        final updatedAllItems = currentState.allItems
+            .where((i) => i.id != itemId).toList();
+        emit(CatalogDataLoaded(updatedCategories, updatedAllItems)); // Updated
       }
     } catch (e) {
       emit(CatalogError(e.toString()));
     }
   }
 
-
+  Future<void> loadAllItems() async {
+    final currentState = state;
+    if (currentState is CatalogDataLoaded) {
+      try {
+        final items = await catalogRepo.getAllCatalogItems();
+        emit(CatalogDataLoaded(currentState.categories, items));
+      } catch (e) {
+        emit(CatalogError(e.toString()));
+      }
+    }
+  }
 }
