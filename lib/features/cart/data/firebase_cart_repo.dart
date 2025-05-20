@@ -101,4 +101,28 @@ class FirebaseCartRepo implements CartRepo {
       throw Exception('Error clearing cart: $e');
     }
   }
+
+  @override
+  Future<void> confirmPurchase(String userId, List<CartItem> items, String address) async {
+    try {
+      final orderDoc = _firestore.collection('orders').doc();
+      await orderDoc.set({
+        'userId': userId,
+        'items': items.map((item) =>
+        {
+          'itemId': item.itemId,
+          'name': item.name,
+          'price': item.price,
+          'quantity': item.quantity,
+        }).toList(),
+        'total': items.fold(
+            0.0, (sum, item) => sum + (item.price * item.quantity)),
+        'timestamp': FieldValue.serverTimestamp(),
+        'address': address,
+        'status': 'Pending',
+      });
+    } catch (e) {
+      throw Exception('Error confirming purchase: $e');
+    }
+  }
 }

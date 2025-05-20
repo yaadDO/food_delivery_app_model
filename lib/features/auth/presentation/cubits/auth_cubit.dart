@@ -87,4 +87,6 @@ class AuthCubit extends Cubit<AuthState> {
     authRepo.logout();
     emit(Unauthenticated());
   }
+
+
 }

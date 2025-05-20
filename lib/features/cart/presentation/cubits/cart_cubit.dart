@@ -54,4 +54,13 @@ class CartCubit extends Cubit<CartState> {
       emit(CartError(e.toString()));
     }
   }
+  Future<void> confirmPurchase(String userId, String address) async {
+    try {
+      final items = await cartRepo.getCartItems(userId);
+      await cartRepo.confirmPurchase(userId, items, address);
+      await clearCart(userId);
+    } catch (e) {
+      emit(CartError(e.toString()));
+      }
+   }
 }
