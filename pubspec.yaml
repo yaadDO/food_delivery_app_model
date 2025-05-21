@@ -65,6 +65,8 @@ dependencies:
   badges: ^3.0.0
   flutter_animate: ^4.1.1+1
   google_fonts: ^4.0.4
+  line_awesome_flutter: ^1.0.0
+  flutter_paypal_native: ^2.0.2
 
 
 dev_dependencies:

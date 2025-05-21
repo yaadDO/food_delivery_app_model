@@ -18,8 +18,6 @@ import 'package:food_delivery/features/search/data/firebase_search_repo.dart';
 import 'package:food_delivery/features/search/domain/repository/search_repo.dart';
 import 'package:food_delivery/features/search/presentation/cubits/search_cubit.dart';
 import 'package:food_delivery/features/themes/themes_cubit.dart';
-
-import 'features/admin/presentation/catalogue_pages/AdminCatalogPage.dart';
 import 'features/admin/presentation/home/admin_home_page.dart';
 import 'features/chat/data/firebase_chat_repo.dart';
 import 'features/chat/presentation/cubit/chat_cubit.dart';

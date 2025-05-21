@@ -84,7 +84,7 @@ class PromoItemCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '\$${item.price.toStringAsFixed(2)}',
+                              '${item.price.toStringAsFixed(2)}',
                               style: GoogleFonts.poppins(
                                 color: Theme.of(context).colorScheme.inversePrimary,
                                 fontWeight: FontWeight.w700,

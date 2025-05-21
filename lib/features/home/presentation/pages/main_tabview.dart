@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/features/cart/presentation/pages/cart_page.dart';
-import 'package:food_delivery/features/catalogue/presentation/pages/CatalogPage.dart';
 import 'package:food_delivery/features/home/presentation/pages/home_page.dart';
 import 'package:food_delivery/features/promo/presentation/pages/promo_page.dart';
 import 'package:food_delivery/features/settings/presentation/pages/more_page.dart';
+import '../../../catalogue/presentation/pages/catalog_page.dart';
 
 class NavBar extends StatefulWidget {
   const NavBar({super.key});

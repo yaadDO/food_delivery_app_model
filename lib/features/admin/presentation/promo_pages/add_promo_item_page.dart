@@ -3,6 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 import 'package:food_delivery/features/promo/presentation/cubit/promo_cubit.dart';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
+import 'package:food_delivery/features/promo/presentation/cubit/promo_cubit.dart';
+
 class AddPromoItemPage extends StatefulWidget {
   const AddPromoItemPage({super.key});
 
@@ -17,6 +22,7 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
   final _quantityController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _imageController = TextEditingController();
+  final _discountController = TextEditingController(); // New controller
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +49,23 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
                 decoration: const InputDecoration(labelText: 'Price'),
                 keyboardType: TextInputType.number,
                 validator: (value) => value!.isEmpty ? 'Required' : null,
+              ),
+              // New discount percentage field
+              TextFormField(
+                controller: _discountController,
+                decoration: const InputDecoration(
+                  labelText: 'Discount Percentage (%)',
+                  hintText: 'Optional',
+                ),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value!.isNotEmpty) {
+                    final num = double.tryParse(value);
+                    if (num == null) return 'Enter valid number';
+                    if (num < 0 || num > 100) return 'Enter 0-100';
+                  }
+                  return null;
+                },
               ),
               TextFormField(
                 controller: _quantityController,
@@ -77,10 +100,13 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
         price: double.parse(_priceController.text),
         quantity: int.parse(_quantityController.text),
         description: _descriptionController.text,
+        discountPercentage: _discountController.text.isEmpty
+            ? null
+            : double.parse(_discountController.text),
       );
 
       context.read<PromoCubit>().addItem(newItem).then((_) {
-        Navigator.pop(context, true); // Return success
+        Navigator.pop(context, true);
       }).catchError((error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${error.toString()}')),

@@ -6,5 +6,4 @@ abstract class CartRepo {
   Future<void> removeFromCart(String userId, String itemId);
   Future<void> updateQuantity(String userId, String itemId, int newQuantity);
   Future<void> clearCart(String userId);
-  Future<void> confirmPurchase(String userId, List<CartItem> items, String address);
-}
+  Future<void> confirmPurchase(String userId, List<CartItem> items, String address, String paymentMethod);}

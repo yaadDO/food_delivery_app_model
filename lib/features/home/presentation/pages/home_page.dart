@@ -24,7 +24,8 @@ class HomePage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => CatalogCubit(FirebaseCatalogRepo())..loadCategories(),
+          create: (context) =>
+              CatalogCubit(FirebaseCatalogRepo())..loadCategories(),
         ),
         BlocProvider(
           create: (context) => PromoCubit(FirebasePromoRepo())..loadItems(),
@@ -77,21 +78,21 @@ class HomePage extends StatelessWidget {
           BlocBuilder<ProfileCubit, ProfileState>(
             builder: (context, state) {
               final greeting = _getGreeting();
-              String userName = 'there'; // Default name
+              String userName = 'Beautiful'; // Default name
 
               if (state is ProfileLoaded) {
                 userName = state.profileUser.name.isNotEmpty
                     ? state.profileUser.name
-                    : 'there';
+                    : 'Beautiful';
               } else if (state is ProfileError) {
-                userName = 'there';
+                userName = 'Beautiful';
               }
 
               return Text(
                 "$greeting, $userName",
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               );
             },
           ),
@@ -115,7 +116,11 @@ class HomePage extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             "Categories",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepOrangeAccent,
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -158,12 +163,16 @@ class HomePage extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             "Special Offers",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.deepOrangeAccent,
+            ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 15),
         SizedBox(
-          height: 200, // Increased height to accommodate card content
+          height: 240,
           child: BlocBuilder<PromoCubit, PromoState>(
             builder: (context, state) {
               if (state is PromoLoaded) {
@@ -172,18 +181,20 @@ class HomePage extends StatelessWidget {
                 }
                 return ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.only(left: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   itemCount: state.items.length,
                   itemBuilder: (context, index) {
                     final item = state.items[index];
-                    return SizedBox( // Add fixed width constraint
-                      width: 300, // Adjust based on your design needs
+                    return Container(
+                      width: 280,
+                      margin: const EdgeInsets.only(right: 20),
                       child: PromoItemCard(
                         item: item,
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => PromoItemDetailPage(item: item),
+                            builder: (context) =>
+                                PromoItemDetailPage(item: item),
                           ),
                         ),
                       ),
@@ -209,7 +220,11 @@ class HomePage extends StatelessWidget {
         children: [
           const Text(
             "Popular Menu",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.deepOrangeAccent,
+              fontSize: 22,
+            ),
           ),
           BlocBuilder<CatalogCubit, CatalogState>(
             builder: (context, state) {

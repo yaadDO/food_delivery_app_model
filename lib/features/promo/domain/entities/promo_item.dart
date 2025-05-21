@@ -5,6 +5,7 @@ class PromoItem {
   final double price;
   final int quantity;
   final String description;
+  final double? discountPercentage; // New field
 
   PromoItem({
     required this.id,
@@ -13,7 +14,9 @@ class PromoItem {
     required this.price,
     required this.quantity,
     required this.description,
+    this.discountPercentage, // Added as optional parameter
   });
+
   PromoItem copyWith({
     String? id,
     String? name,
@@ -21,6 +24,7 @@ class PromoItem {
     double? price,
     int? quantity,
     String? description,
+    double? discountPercentage, // Added to copyWith
   }) {
     return PromoItem(
       id: id ?? this.id,
@@ -29,6 +33,7 @@ class PromoItem {
       price: price ?? this.price,
       quantity: quantity ?? this.quantity,
       description: description ?? this.description,
+      discountPercentage: discountPercentage ?? this.discountPercentage,
     );
   }
 }

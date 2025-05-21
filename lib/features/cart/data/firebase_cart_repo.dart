@@ -103,23 +103,23 @@ class FirebaseCartRepo implements CartRepo {
   }
 
   @override
-  Future<void> confirmPurchase(String userId, List<CartItem> items, String address) async {
+  Future<void> confirmPurchase(String userId, List<CartItem> items, String address, String paymentMethod) async {
     try {
       final orderDoc = _firestore.collection('orders').doc();
       await orderDoc.set({
         'userId': userId,
-        'items': items.map((item) =>
-        {
+        'items': items.map((item) => {
           'itemId': item.itemId,
           'name': item.name,
           'price': item.price,
           'quantity': item.quantity,
+          'paymentMethod': paymentMethod,
         }).toList(),
-        'total': items.fold(
-            0.0, (sum, item) => sum + (item.price * item.quantity)),
+        'total': items.fold(0.0, (sum, item) => sum + (item.price * item.quantity)),
         'timestamp': FieldValue.serverTimestamp(),
         'address': address,
         'status': 'Pending',
+        'paymentMethod': paymentMethod,
       });
     } catch (e) {
       throw Exception('Error confirming purchase: $e');

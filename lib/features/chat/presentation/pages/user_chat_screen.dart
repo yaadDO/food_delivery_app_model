@@ -20,7 +20,6 @@ class UserChatScreen extends StatelessWidget {
               stream: context.read<ChatCubit>().getMessages(userId),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-
                 final messages = snapshot.data!;
                 return ListView.builder(
                   reverse: true,
@@ -36,8 +35,8 @@ class UserChatScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: message['sender'] == 'user'
-                              ? Colors.blue[100]
-                              : Colors.grey[300],
+                              ? Colors.grey[600]
+                              : Colors.deepOrangeAccent,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(message['text']),

@@ -54,13 +54,18 @@ class CartCubit extends Cubit<CartState> {
       emit(CartError(e.toString()));
     }
   }
-  Future<void> confirmPurchase(String userId, String address) async {
+
+  @override
+  Future<void> confirmPurchase(String userId, String address, String paymentMethod) async {
     try {
       final items = await cartRepo.getCartItems(userId);
-      await cartRepo.confirmPurchase(userId, items, address);
+      if (paymentMethod.isEmpty) {
+        throw Exception('Please select a payment method');
+      }
+      await cartRepo.confirmPurchase(userId, items, address, paymentMethod);
       await clearCart(userId);
     } catch (e) {
       emit(CartError(e.toString()));
-      }
-   }
+    }
+  }
 }

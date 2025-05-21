@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:food_delivery/features/admin/presentation/catalogue_pages/admin_catelog_items_page.dart';
-import 'package:food_delivery/features/admin/presentation/catalogue_pages/editCatalogpage.dart';
-import 'package:food_delivery/features/admin/presentation/promo_pages/add_promoitem_page.dart';
 import 'package:food_delivery/features/cart/presentation/pages/cart_admin.dart';
 import 'package:food_delivery/features/chat/presentation/pages/admin_chat_list.dart';
-import '../catalogue_pages/AdminCatalogPage.dart';
+import '../catalogue_pages/admin_catalog_page.dart';
 import '../promo_pages/admin_promo_item_page.dart';
 
 

@@ -4,7 +4,9 @@ import 'package:food_delivery/features/admin/presentation/catalogue_pages/admin_
 import 'package:food_delivery/features/admin/presentation/components/admin_category_card.dart';
 import 'package:food_delivery/features/catalogue/data/firebase_catalog_repo.dart';
 import 'package:food_delivery/features/catalogue/presentation/cubits/catalog_cubit.dart';
-import 'editCatalogpage.dart';
+
+import 'edit_catalog_page.dart';
+
 
 class AdminCatalogScreen extends StatelessWidget {
   const AdminCatalogScreen({super.key});

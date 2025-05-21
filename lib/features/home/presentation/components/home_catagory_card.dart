@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:food_delivery/features/catalogue/domain/entities/category.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HomeCategoryCard extends StatelessWidget {
   final Category category;
@@ -17,63 +19,70 @@ class HomeCategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        width: 300, // Increased width to match promo cards
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        width: 300,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4))
+          ],
+        ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(20),
           child: Stack(
             fit: StackFit.expand,
             children: [
               CachedNetworkImage(
                 imageUrl: category.imageUrl,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[200],
-                  child: const Center(child: CircularProgressIndicator()),
+                placeholder: (context, url) => Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(color: Colors.white),
                 ),
                 errorWidget: (context, url, error) => Container(
                   color: Colors.grey[200],
-                  child: const Icon(Icons.fastfood, color: Colors.white),
+                  child: const Icon(FontAwesomeIcons.utensils, color: Colors.white),
                 ),
               ),
-              // Gradient overlay
               Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(15),
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.7),
+                      Colors.black.withOpacity(0.8),
                     ],
+                    stops: const [0.5, 1],
                   ),
                 ),
               ),
-              // Category name
               Positioned(
                 left: 16,
                 right: 16,
                 bottom: 16,
                 child: Text(
                   category.name,
-                  style: const TextStyle(
+                  style: GoogleFonts.poppins(
                     color: Colors.white,
-                    fontSize: 20, // Larger font size
-                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
                     shadows: [
                       Shadow(
-                        blurRadius: 6,
-                        color: Colors.black54,
-                        offset: Offset(2, 2),
+                        blurRadius: 8,
+                        color: Colors.black.withOpacity(0.5),
+                        offset: const Offset(2, 2),
                       )
                     ],
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

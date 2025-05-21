@@ -16,7 +16,7 @@ class AboutPage extends StatelessWidget {
           children: [
             Text('Release Date: TBD'),
             const SizedBox(height: 5,),
-            Text('Version: 1.1'),
+            Text('Version: 1.0'),
             const SizedBox(height: 5,),
             Text('Published By: Once Software'),
           ],

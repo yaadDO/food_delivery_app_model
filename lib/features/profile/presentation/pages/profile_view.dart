@@ -38,7 +38,6 @@ class ViewProfileScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         },
       ),
-      floatingActionButton: FloatingActionButton(onPressed: () => context.read<AuthCubit>().logout()),
     );
   }
 

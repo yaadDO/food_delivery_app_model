@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_paypal_native/flutter_paypal_native.dart';
 import 'package:food_delivery/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:food_delivery/features/cart/presentation/cubits/cart_cubit.dart';
 import 'package:food_delivery/features/profile/presentation/cubits/profile_cubit.dart';
@@ -14,14 +15,21 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   List<CartItem> _currentCartItems = [];
+  String? _selectedPaymentMethod;
+  final _paypalNative = FlutterPaypalNative.instance;
+  bool _paypalInitialized = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userId = context.read<AuthCubit>().currentUser!.uid;
+      final userId = context
+          .read<AuthCubit>()
+          .currentUser!
+          .uid;
       context.read<CartCubit>().loadCart(userId);
     });
+
   }
 
   @override
@@ -51,8 +59,12 @@ class _CartPageState extends State<CartPage> {
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () {
-                          final userId = context.read<AuthCubit>().currentUser!.uid;
-                          context.read<CartCubit>().removeFromCart(userId, item.itemId);
+                          final userId = context
+                              .read<AuthCubit>()
+                              .currentUser!
+                              .uid;
+                          context.read<CartCubit>().removeFromCart(
+                              userId, item.itemId);
                         },
                       ),
                     ],
@@ -68,8 +80,12 @@ class _CartPageState extends State<CartPage> {
         builder: (context, state) {
           return FloatingActionButton.extended(
             onPressed: () async {
-              final userId = context.read<AuthCubit>().currentUser!.uid;
-              final profile = await context.read<ProfileCubit>().getUserProfile(userId);
+              final userId = context
+                  .read<AuthCubit>()
+                  .currentUser!
+                  .uid;
+              final profile = await context.read<ProfileCubit>().getUserProfile(
+                  userId);
               final address = profile?.address ?? 'No address set';
 
               if (_currentCartItems.isEmpty) {
@@ -78,33 +94,68 @@ class _CartPageState extends State<CartPage> {
                 );
                 return;
               }
-
               showDialog(
                 context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Confirm Purchase'),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Shipping to: $address'),
-                      Text('Total: \$${_calculateTotal(_currentCartItems)}'),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                builder: (context) =>
+                    StatefulBuilder(
+                      builder: (context, setState) =>
+                          AlertDialog(
+                            title: const Text('Confirm Purchase'),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Shipping to: $address'),
+                                Text('Total: \$${_calculateTotal(
+                                    _currentCartItems).toStringAsFixed(2)}'),
+                                const SizedBox(height: 16),
+                                const Text('Payment Method:', style: TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                                _buildPaymentMethodTile(
+                                  title: 'Visa',
+                                  leading: Image.asset(
+                                      'assets/img/visa_icon.png', width: 40),
+                                  onChanged: (val) =>
+                                      setState(() =>
+                                      _selectedPaymentMethod = val),
+                                ),
+                                _buildPaymentMethodTile(
+                                  title: 'PayPal',
+                                  leading: Image.asset(
+                                      'assets/img/paypal.png', width: 40),
+                                  onChanged: (val) =>
+                                      setState(() =>
+                                      _selectedPaymentMethod = val),
+                                ),
+                                _buildPaymentMethodTile(
+                                  title: 'Cash on Delivery',
+                                  leading: const Icon(
+                                      Icons.attach_money, size: 40,
+                                      color: Colors.green),
+                                  onChanged: (val) =>
+                                      setState(() =>
+                                      _selectedPaymentMethod = val),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: _selectedPaymentMethod == null
+                                    ? null
+                                    : () {
+                                  context.read<CartCubit>().confirmPurchase(
+                                      userId, address, _selectedPaymentMethod!);
+                                  Navigator.pop(context);
+                                },
+                                child: const Text('Confirm'),
+                              ),
+                            ],
+                          ),
                     ),
-                    TextButton(
-                      onPressed: () {
-                        context.read<CartCubit>().confirmPurchase(userId, address);
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Confirm'),
-                    ),
-                  ],
-                ),
               );
             },
             label: const Text('Checkout'),
@@ -117,5 +168,21 @@ class _CartPageState extends State<CartPage> {
 
   double _calculateTotal(List<CartItem> items) {
     return items.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
+  }
+
+  Widget _buildPaymentMethodTile({
+    required String title,
+    required Widget leading,
+    required Function(String?) onChanged,
+  }) {
+    return ListTile(
+      leading: leading,
+      title: Text(title),
+      trailing: Radio<String>(
+        value: title,
+        groupValue: _selectedPaymentMethod,
+        onChanged: onChanged,
+      ),
+    );
   }
 }

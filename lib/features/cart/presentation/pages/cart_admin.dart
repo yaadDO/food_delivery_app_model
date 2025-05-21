@@ -21,10 +21,40 @@ class CartAdmin extends StatelessWidget {
         builder: (context, snapshot) {
           if (!snapshot.hasData) return CircularProgressIndicator();
 
+          // Separate orders into non-delivered and delivered
+          List<QueryDocumentSnapshot> nonDelivered = [];
+          List<QueryDocumentSnapshot> delivered = [];
+
+          for (var doc in snapshot.data!.docs) {
+            final data = doc.data() as Map<String, dynamic>;
+            if (data['status'] == 'Delivered') {
+              delivered.add(doc);
+            } else {
+              nonDelivered.add(doc);
+            }
+          }
+
+          // Sort non-delivered by timestamp (newest first)
+          nonDelivered.sort((a, b) {
+            Timestamp aTime = (a.data() as Map<String, dynamic>)['timestamp'];
+            Timestamp bTime = (b.data() as Map<String, dynamic>)['timestamp'];
+            return bTime.compareTo(aTime);
+          });
+
+          // Sort delivered by timestamp (newest first)
+          delivered.sort((a, b) {
+            Timestamp aTime = (a.data() as Map<String, dynamic>)['timestamp'];
+            Timestamp bTime = (b.data() as Map<String, dynamic>)['timestamp'];
+            return bTime.compareTo(aTime);
+          });
+
+          // Combine lists with non-delivered first
+          List<QueryDocumentSnapshot> sortedDocs = [...nonDelivered, ...delivered];
+
           return ListView.builder(
-            itemCount: snapshot.data!.docs.length,
+            itemCount: sortedDocs.length,
             itemBuilder: (context, index) {
-              final order = snapshot.data!.docs[index];
+              final order = sortedDocs[index];
               final data = order.data() as Map<String, dynamic>;
               final status = data['status'];
               final isDelivered = status == 'Delivered';
@@ -35,7 +65,13 @@ class CartAdmin extends StatelessWidget {
                   final userName = userSnapshot.data ?? 'Loading...';
                   return ListTile(
                     title: Text(userName),
-                    subtitle: Text('Total: \$${data['total'].toStringAsFixed(2)}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Total: \$${data['total'].toStringAsFixed(2)}'),
+                        Text('Payment: ${data['paymentMethod']}'),
+                      ],
+                    ),
                     trailing: Text(
                       isDelivered ? 'Delivered' : 'Pending',
                       style: TextStyle(
