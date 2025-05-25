@@ -28,6 +28,9 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  flutter_stripe: ^10.2.0
+  http: ^1.1.0
+
   flutter:
     sdk: flutter
 
@@ -39,11 +42,9 @@ dependencies:
   image_picker: ^1.0.8
   google_maps_flutter: ^2.3.1
   custom_map_markers: ^0.0.2+1
-  http: ^1.1.0
   flutter_easyloading: ^3.0.5
   shared_preferences: ^2.1.2
   intl: ^0.19.0
-  # flutter_timezone: ^1.0.6
   get_it: ^7.6.0
   firebase_core: ^3.13.0
   firebase_auth: ^5.5.3
@@ -58,7 +59,6 @@ dependencies:
   cached_network_image: ^3.2.3
   flutter_staggered_animations: ^1.1.1
   shimmer: ^2.0.0
-  # flutter_icons: ^1.1.0
   liquid_progress_indicator: ^0.4.0
   timeago: ^3.3.0
   font_awesome_flutter: ^10.5.0
@@ -66,8 +66,11 @@ dependencies:
   flutter_animate: ^4.1.1+1
   google_fonts: ^4.0.4
   line_awesome_flutter: ^1.0.0
-  flutter_paypal_native: ^2.0.2
-
+  stripe_sdk: ^5.0.0
+  cloud_functions: ^5.5.1
+  firebase_messaging: ^15.2.6
+  flutter_local_notifications: ^19.2.1
+  flutter_launcher_icons: ^0.14.3
 
 dev_dependencies:
   flutter_test:

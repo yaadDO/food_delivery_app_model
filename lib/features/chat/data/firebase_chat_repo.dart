@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../domain/repository/chat_repo.dart';
 
@@ -81,4 +82,33 @@ class FirebaseChatRepo implements ChatRepo {
       return chats;
     });
   }
+  Future<void> _sendNotification(String userId, String message, bool isAdmin) async {
+    try {
+      // Get user's FCM token from Firestore
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      final token = userDoc.data()?['fcmToken'];
+
+      if (token == null) return;
+
+      // Determine notification content
+      final title = isAdmin ? 'New Support Message' : 'Customer Message';
+      final body = isAdmin ? message : 'You have a new customer message';
+
+      // Send notification via Firebase Functions (you'll need to create this endpoint)
+      await _firestore.collection('notifications').add({
+        'to': token,
+        'notification': {
+          'title': title,
+          'body': body,
+        },
+        'data': {
+          'type': 'chat',
+          'userId': userId,
+        }
+      });
+    } catch (e) {
+      print('Error sending notification: $e');
+    }
+  }
+
 }

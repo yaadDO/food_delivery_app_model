@@ -1,6 +1,7 @@
 //Creates a global key that can be used to access the NavigatorState from anywhere in the app. This is useful for navigating between screens without needing a BuildContext import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' as flutter_stripe;
 import 'package:food_delivery/features/auth/data/firebase_auth_repo.dart';
 import 'package:food_delivery/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:food_delivery/features/auth/presentation/cubits/auth_states.dart';
@@ -21,6 +22,8 @@ import 'package:food_delivery/features/themes/themes_cubit.dart';
 import 'features/admin/presentation/home/admin_home_page.dart';
 import 'features/chat/data/firebase_chat_repo.dart';
 import 'features/chat/presentation/cubit/chat_cubit.dart';
+import 'features/notifications/data/notification_repo.dart';
+import 'features/notifications/presentation/cubits/notifications_cubit.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -42,6 +45,11 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    _initStripe();
+  }
+
+  Future<void> _initStripe() async {
+    await flutter_stripe.Stripe.instance.applySettings();
   }
 
   @override
@@ -79,6 +87,9 @@ class _MyAppState extends State<MyApp> {
         ),
         BlocProvider<ChatCubit>(
           create: (context) => ChatCubit(FirebaseChatRepo()),
+        ),
+        BlocProvider<NotificationsCubit>(
+          create: (context) => NotificationsCubit(FirebaseNotificationsRepo()),
         ),
         BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
       ],

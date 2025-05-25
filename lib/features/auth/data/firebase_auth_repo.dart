@@ -2,6 +2,7 @@
 //provides key authentication operations such as user login, registration, logout, and retrieving the currently logged-in useR
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../domain/entities/app_user.dart';
 import '../domain/repository/auth_repo.dart';
 
@@ -117,5 +118,14 @@ class FirebaseAuthRepo implements AuthRepo {
       name: userData['name'] ?? 'No Name', // Fallback value
       isAdmin: userData['isAdmin'] ?? false,
     );
+  }
+
+  Future<void> storeFCMToken(String userId) async {
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token != null) {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'fcmToken': token,
+      });
+    }
   }
 }
