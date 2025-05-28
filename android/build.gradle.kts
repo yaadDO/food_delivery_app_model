@@ -1,3 +1,9 @@
+buildscript {
+    extra.apply {
+        set("kotlin_version", "2.1.0") // Override Kotlin version
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -19,3 +25,4 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
