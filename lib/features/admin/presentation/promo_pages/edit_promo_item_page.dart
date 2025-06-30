@@ -1,32 +1,50 @@
-import 'dart:io' show File;
+import 'dart:io';
 import 'dart:typed_data';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 import 'package:food_delivery/features/promo/presentation/cubit/promo_cubit.dart';
-import 'package:image_picker/image_picker.dart' show ImagePicker, ImageSource;
 
-class AddPromoItemPage extends StatefulWidget {
-  const AddPromoItemPage({super.key});
+class EditPromoItemPage extends StatefulWidget {
+  final PromoItem item;
+
+  const EditPromoItemPage({super.key, required this.item});
 
   @override
-  State<AddPromoItemPage> createState() => _AddPromoItemPageState();
+  State<EditPromoItemPage> createState() => _EditPromoItemPageState();
 }
 
-class _AddPromoItemPageState extends State<AddPromoItemPage> {
+class _EditPromoItemPageState extends State<EditPromoItemPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _quantityController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _imageController = TextEditingController();
-  final _discountController = TextEditingController();
-
+  late TextEditingController _nameController;
+  late TextEditingController _priceController;
+  late TextEditingController _quantityController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _discountController;
   File? _imageFile;
   Uint8List? _imageBytes;
+  String? _currentImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.item.name);
+    _priceController = TextEditingController(text: widget.item.price.toString());
+    _quantityController = TextEditingController(
+        text: widget.item.quantity.toString());
+    _descriptionController = TextEditingController(
+        text: widget.item.description);
+    _discountController = TextEditingController(
+        text: widget.item.discountPercentage?.toString() ?? '');
+    _currentImageUrl = widget.item.imageUrl;
+  }
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery, imageQuality: 85);
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
@@ -35,10 +53,40 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
     }
   }
 
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      final updatedItem = widget.item.copyWith(
+        name: _nameController.text,
+        price: double.parse(_priceController.text),
+        quantity: int.parse(_quantityController.text),
+        description: _descriptionController.text,
+        discountPercentage: _discountController.text.isEmpty
+            ? null
+            : double.parse(_discountController.text),
+      );
+
+      context.read<PromoCubit>().updateItem(updatedItem, _imageBytes).then((_) {
+        Navigator.pop(context, true);
+      }).catchError((error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating item: $error')),
+        );
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add New Promo Item')),
+      appBar: AppBar(
+        title: const Text('Edit Promo Item'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.save),
+            onPressed: _submitForm,
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -55,16 +103,25 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
                   ),
                   child: _imageFile != null
                       ? Image.file(_imageFile!, fit: BoxFit.cover)
+                      : _currentImageUrl != null && _currentImageUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                    imageUrl: _currentImageUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) =>
+                    const Icon(Icons.error),
+                  )
                       : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+                    children: const [
                       Icon(Icons.add_photo_alternate, size: 50),
                       Text('Tap to add image'),
                     ],
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Item Name'),
@@ -76,7 +133,6 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
                 keyboardType: TextInputType.number,
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
-              // New discount percentage field
               TextFormField(
                 controller: _discountController,
                 decoration: const InputDecoration(
@@ -105,39 +161,15 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
                 maxLines: 3,
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
               ElevatedButton(
                 onPressed: _submitForm,
-                child: const Text('Add Item'),
+                child: const Text('Update Item'),
               ),
             ],
           ),
         ),
       ),
     );
-  }
-
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      final newItem = PromoItem(
-        id: '',
-        name: _nameController.text,
-        imageUrl: '',
-        price: double.parse(_priceController.text),
-        quantity: int.parse(_quantityController.text),
-        description: _descriptionController.text,
-        discountPercentage: _discountController.text.isEmpty
-            ? null
-            : double.parse(_discountController.text),
-      );
-
-      context.read<PromoCubit>().addItem(newItem, _imageBytes).then((_) {
-        Navigator.pop(context, true);
-      }).catchError((error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${error.toString()}')),
-        );
-      });
-    }
   }
 }

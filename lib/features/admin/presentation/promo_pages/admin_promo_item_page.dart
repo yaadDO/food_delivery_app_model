@@ -5,6 +5,17 @@ import 'package:food_delivery/features/promo/presentation/cubit/promo_cubit.dart
 
 import '../components/admin_promo_item_card.dart';
 import 'add_promo_item_page.dart';
+import 'edit_promo_item_page.dart' show EditPromoItemPage;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
+import 'package:food_delivery/features/promo/presentation/cubit/promo_cubit.dart';
+
+import '../components/admin_promo_item_card.dart';
+import 'add_promo_item_page.dart';
+import 'edit_promo_item_page.dart';
 
 class AdminPromoItemPage extends StatefulWidget {
   const AdminPromoItemPage({super.key});
@@ -25,8 +36,21 @@ class _AdminPromoItemPageState extends State<AdminPromoItemPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Promo Items'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => context.read<PromoCubit>().loadItems(),
+          ),
+        ],
       ),
-      body: BlocBuilder<PromoCubit, PromoState>(
+      body: BlocConsumer<PromoCubit, PromoState>(
+        listener: (context, state) {
+          if (state is PromoError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
         builder: (context, state) {
           if (state is PromoLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -52,6 +76,7 @@ class _AdminPromoItemPageState extends State<AdminPromoItemPage> {
                 return AdminPromoItemCard(
                   item: item,
                   onDelete: () => _confirmDeleteItem(context, item),
+                  onEdit: () => _navigateToEditPromoItem(context, item),
                 );
               },
             );
@@ -71,7 +96,22 @@ class _AdminPromoItemPageState extends State<AdminPromoItemPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const AddPromoItemPage()),
-    );
+    ).then((_) {
+      // Refresh after adding new item
+      context.read<PromoCubit>().loadItems();
+    });
+  }
+
+  void _navigateToEditPromoItem(BuildContext context, PromoItem item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditPromoItemPage(item: item),
+      ),
+    ).then((_) {
+      // Refresh after editing item
+      context.read<PromoCubit>().loadItems();
+    });
   }
 
   void _confirmDeleteItem(BuildContext context, PromoItem item) {

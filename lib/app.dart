@@ -1,7 +1,6 @@
 //Creates a global key that can be used to access the NavigatorState from anywhere in the app. This is useful for navigating between screens without needing a BuildContext import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_stripe/flutter_stripe.dart' as flutter_stripe;
 import 'package:food_delivery/features/auth/data/firebase_auth_repo.dart';
 import 'package:food_delivery/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:food_delivery/features/auth/presentation/cubits/auth_states.dart';
@@ -41,23 +40,16 @@ class _MyAppState extends State<MyApp> {
   final firebaseCartRepo = FirebaseCartRepo();
   final firebaseChatRepo = FirebaseChatRepo();
 
-
   @override
   void initState() {
     super.initState();
-    _initStripe();
-  }
-
-  Future<void> _initStripe() async {
-    await flutter_stripe.Stripe.instance.applySettings();
+    // Stripe initialization removed
   }
 
   @override
   Widget build(BuildContext context) {
-    //This widget provides multiple BLoCs, to the widget tree. Each BlocProvider is responsible for creating and providing a specific BLoC to the app.
     return MultiBlocProvider(
       providers: [
-        //This widget listens to changes
         BlocProvider<AuthCubit>(
           create: (context) =>
           AuthCubit(authRepo: firebaseAuthRepo)..checkAuth(),
@@ -65,7 +57,6 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<ProfileCubit>(
           create: (context) => ProfileCubit(
             profileRepo: firebaseProfileRepo,
-            //storageRepo: firebaseStorageRepo,
           ),
         ),
         BlocProvider<CatalogCubit>(
@@ -93,19 +84,15 @@ class _MyAppState extends State<MyApp> {
         ),
         BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()),
       ],
-      //This BlocBuilder listens to the ThemeCubit and rebuilds the MaterialApp whenever the theme changes.
       child: BlocBuilder<ThemeCubit, ThemeData>(
         builder: (context, currentTheme) => MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: currentTheme,
-          //BlocConsumers widget listens to the AuthCubit and rebuilds the UI based on the authentication state,
           home: BlocConsumer<AuthCubit, AuthState>(
             builder: (context, authState) {
               if (authState is Unauthenticated) return const WelcomeView();
               if (authState is Authenticated) {
-                // Redirect admins to admin page
                 if (authState.isAdmin) return const AdminHomePage();
-                // Regular users go to main app
                 return const NavBar();
               }
               return const Scaffold(

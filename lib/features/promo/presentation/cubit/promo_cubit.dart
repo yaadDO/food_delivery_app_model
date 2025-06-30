@@ -1,3 +1,4 @@
+import 'dart:typed_data'; // Fix Uint8List import
 import 'package:bloc/bloc.dart';
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 import 'package:food_delivery/features/promo/domain/repository/promo_repo.dart';
@@ -19,9 +20,9 @@ class PromoCubit extends Cubit<PromoState> {
     }
   }
 
-  Future<void> addItem(PromoItem item) async {
+  Future<void> addItem(PromoItem item, Uint8List? imageBytes) async {
     try {
-      final newItem = await promoRepo.addItem(item);
+      final newItem = await promoRepo.addItem(item, imageBytes);
       final currentState = state;
       if (currentState is PromoLoaded) {
         emit(PromoLoaded([...currentState.items, newItem]));
@@ -31,13 +32,14 @@ class PromoCubit extends Cubit<PromoState> {
     }
   }
 
-  Future<void> updateItem(PromoItem item) async {
+  // Fixed updateItem method
+  Future<void> updateItem(PromoItem item, Uint8List? imageBytes) async {
     try {
-      await promoRepo.updateItem(item);
+      final updatedItem = await promoRepo.updateItem(item, imageBytes);
       final currentState = state;
       if (currentState is PromoLoaded) {
         final updatedItems = currentState.items.map((i) =>
-        i.id == item.id ? item : i).toList();
+        i.id == item.id ? updatedItem : i).toList();
         emit(PromoLoaded(updatedItems));
       }
     } catch (e) {
@@ -45,6 +47,7 @@ class PromoCubit extends Cubit<PromoState> {
     }
   }
 
+  // Add deleteItem method
   Future<void> deleteItem(String itemId) async {
     try {
       await promoRepo.deleteItem(itemId);

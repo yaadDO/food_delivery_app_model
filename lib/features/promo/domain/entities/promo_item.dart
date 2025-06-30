@@ -5,7 +5,7 @@ class PromoItem {
   final double price;
   final int quantity;
   final String description;
-  final double? discountPercentage; // New field
+  final double? discountPercentage;
 
   PromoItem({
     required this.id,
@@ -14,8 +14,21 @@ class PromoItem {
     required this.price,
     required this.quantity,
     required this.description,
-    this.discountPercentage, // Added as optional parameter
+    this.discountPercentage,
   });
+
+  // Add this toJson() method
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'imageUrl': imageUrl,
+      'price': price,
+      'quantity': quantity,
+      'description': description,
+      'discountPercentage': discountPercentage,
+    };
+  }
 
   PromoItem copyWith({
     String? id,
@@ -24,7 +37,7 @@ class PromoItem {
     double? price,
     int? quantity,
     String? description,
-    double? discountPercentage, // Added to copyWith
+    double? discountPercentage,
   }) {
     return PromoItem(
       id: id ?? this.id,
