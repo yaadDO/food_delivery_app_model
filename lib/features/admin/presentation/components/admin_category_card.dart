@@ -1,5 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/features/catalogue/domain/entities/category.dart';
 import 'package:food_delivery/features/catalogue/presentation/cubits/catalog_cubit.dart';
@@ -13,6 +14,16 @@ class AdminCategoryCard extends StatelessWidget {
     required this.category,
     required this.onTap,
   });
+
+  Future<String> _getImageUrl(String imagePath) async {
+    if (imagePath.isEmpty) return '';
+    try {
+      return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
+    } catch (e) {
+      print('Error getting image URL: $e');
+      return '';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,16 +44,33 @@ class AdminCategoryCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12)),
-                    child: CachedNetworkImage(
-                      imageUrl: category.imageUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey[200],
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.error),
-                      ),
+                    child: FutureBuilder<String>(
+                      future: _getImageUrl(category.imagePath),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.done) {
+                          final url = snapshot.data ?? '';
+
+                          if (url.isNotEmpty) {
+                            return CachedNetworkImage(
+                              imageUrl: url,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: Colors.grey[200],
+                                child: const Center(child: CircularProgressIndicator()),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.broken_image, size: 40),
+                              ),
+                            );
+                          }
+                        }
+
+                        return Container(
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.broken_image, size: 40),
+                        );
+                      },
                     ),
                   ),
                 ),

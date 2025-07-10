@@ -1,12 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // Add this import
 import 'package:food_delivery/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:food_delivery/features/cart/domain/entities/cart_item.dart';
 import 'package:food_delivery/features/cart/presentation/cubits/cart_cubit.dart';
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 
 class PromoItemDetailPage extends StatelessWidget {
   final PromoItem item;
@@ -32,11 +32,27 @@ class PromoItemDetailPage extends StatelessWidget {
               tag: item.id,
               child: Stack(
                 children: [
-                  CachedNetworkImage(
-                    imageUrl: item.imageUrl,
-                    width: double.infinity,
-                    height: MediaQuery.of(context).size.height * 0.5,
-                    fit: BoxFit.cover,
+                  // Replace with FutureBuilder for Firebase Storage
+                  FutureBuilder<String>(
+                    future: _getImageUrl(item.imagePath),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.done) {
+                        if (snapshot.hasData) {
+                          return CachedNetworkImage(
+                            imageUrl: snapshot.data!,
+                            width: double.infinity,
+                            height: MediaQuery.of(context).size.height * 0.5,
+                            fit: BoxFit.cover,
+                          );
+                        }
+                      }
+                      return Container(
+                        width: double.infinity,
+                        height: MediaQuery.of(context).size.height * 0.5,
+                        color: Colors.grey[200],
+                        child: const Center(child: CircularProgressIndicator()),
+                      );
+                    },
                   ),
                   Positioned(
                     bottom: 20,
@@ -116,7 +132,8 @@ class PromoItemDetailPage extends StatelessWidget {
                           itemId: item.id,
                           name: item.name,
                           price: item.price,
-                          imageUrl: item.imageUrl,
+                          imagePath: item.imagePath, // Use imagePath instead of imageUrl
+                          quantity: 1, // Add quantity parameter
                         );
                         context.read<CartCubit>().addToCart(userId, cartItem);
 
@@ -133,5 +150,10 @@ class PromoItemDetailPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Helper method to get image URL from storage path
+  Future<String> _getImageUrl(String imagePath) async {
+    return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
   }
 }

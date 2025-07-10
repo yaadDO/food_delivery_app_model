@@ -18,6 +18,7 @@ import 'package:food_delivery/features/search/data/firebase_search_repo.dart';
 import 'package:food_delivery/features/search/domain/repository/search_repo.dart';
 import 'package:food_delivery/features/search/presentation/cubits/search_cubit.dart';
 import 'package:food_delivery/features/themes/themes_cubit.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'features/admin/presentation/home/admin_home_page.dart';
 import 'features/chat/data/firebase_chat_repo.dart';
 import 'features/chat/presentation/cubit/chat_cubit.dart';
@@ -43,7 +44,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    // Stripe initialization removed
+    GoogleSignIn().signInSilently();
   }
 
   @override
@@ -87,6 +88,7 @@ class _MyAppState extends State<MyApp> {
       child: BlocBuilder<ThemeCubit, ThemeData>(
         builder: (context, currentTheme) => MaterialApp(
           debugShowCheckedModeBanner: false,
+          navigatorKey: navigatorKey, // Add navigatorKey here
           theme: currentTheme,
           home: BlocConsumer<AuthCubit, AuthState>(
             builder: (context, authState) {
@@ -106,6 +108,9 @@ class _MyAppState extends State<MyApp> {
                 final currentUserId =
                     context.read<AuthCubit>().currentUser!.uid;
                 context.read<ProfileCubit>().fetchUserProfile(currentUserId);
+
+                // ADDED: Clear navigation stack after successful auth
+                navigatorKey.currentState?.popUntil((route) => route.isFirst);
               }
             },
           ),

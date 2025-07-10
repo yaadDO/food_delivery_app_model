@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // Added import
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/features/catalogue/domain/entities/catalog_item.dart';
@@ -13,6 +14,12 @@ class AdminItemCard extends StatelessWidget {
     required this.item,
     required this.onTap,
   });
+
+  // Add this method to get download URL from Firebase Storage path
+  Future<String> _getImageUrl(String imagePath) async {
+    if (imagePath.isEmpty) return '';
+    return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,16 +40,30 @@ class AdminItemCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(12)),
-                    child: CachedNetworkImage(
-                      imageUrl: item.imageUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey[200],
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.error),
-                      ),
+                    child: FutureBuilder<String>(
+                      future: _getImageUrl(item.imagePath),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.done) {
+                          if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                            return CachedNetworkImage(
+                              imageUrl: snapshot.data!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: Colors.grey[200],
+                                child: const Center(child: CircularProgressIndicator()),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.error),
+                              ),
+                            );
+                          }
+                        }
+                        return Container(
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.fastfood, size: 60),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -99,7 +120,7 @@ class AdminItemCard extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              context.read<CatalogCubit>().deleteItem(item.id, item.categoryId);
+              context.read<CatalogCubit>().deleteItem(item.id); // Only pass itemId
               Navigator.pop(context);
             },
             style: TextButton.styleFrom(

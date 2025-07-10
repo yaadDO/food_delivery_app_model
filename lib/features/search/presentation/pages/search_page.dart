@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/features/search/domain/entities/search_item.dart';
 import 'package:food_delivery/features/search/presentation/cubits/search_cubit.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class SearchPage extends StatelessWidget {
   const SearchPage({super.key});
@@ -67,7 +69,7 @@ class _SearchResults extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = items[index];
         return ListTile(
-          leading: Image.network(item.imageUrl, width: 50, height: 50),
+          leading: _FirebaseImageWidget(imagePath: item.imagePath),
           title: Text(item.name),
           subtitle: Text(item.description),
           trailing: Text('\$${item.price.toStringAsFixed(2)}'),
@@ -77,5 +79,51 @@ class _SearchResults extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _FirebaseImageWidget extends StatelessWidget {
+  final String imagePath;
+
+  const _FirebaseImageWidget({required this.imagePath});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _getImageUrl(imagePath),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          if (snapshot.hasData) {
+            return CachedNetworkImage(
+              imageUrl: snapshot.data!,
+              width: 50,
+              height: 50,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                width: 50,
+                height: 50,
+                color: Colors.grey[200],
+              ),
+              errorWidget: (context, url, error) => Container(
+                width: 50,
+                height: 50,
+                color: Colors.grey[200],
+                child: const Icon(Icons.error),
+              ),
+            );
+          }
+        }
+        return Container(
+          width: 50,
+          height: 50,
+          color: Colors.grey[200],
+          child: const Center(child: CircularProgressIndicator()),
+        );
+      },
+    );
+  }
+
+  Future<String> _getImageUrl(String imagePath) async {
+    return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
   }
 }

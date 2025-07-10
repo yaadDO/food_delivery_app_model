@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:food_delivery/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:food_delivery/features/cart/presentation/cubits/cart_cubit.dart';
 import 'package:food_delivery/features/profile/presentation/cubits/profile_cubit.dart';
@@ -109,17 +110,33 @@ class _CartPageState extends State<CartPage> {
               topLeft: Radius.circular(12),
               bottomLeft: Radius.circular(12),
             ),
-            child: Image.network(
-              item.imageUrl,
-              width: 100,
-              height: 100,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 100,
-                height: 100,
-                color: Colors.grey[200],
-                child: Icon(Icons.fastfood, size: 40, color: Colors.grey[400]),
-              ),
+            child: FutureBuilder<String>(
+              future: _getImageUrl(item.imagePath),
+              builder: (context, snapshot) {
+                // Show image if we have a valid URL
+                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                  return Image.network(
+                    snapshot.data!,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  );
+                }
+
+                // Show placeholder in all other cases
+                return Container(
+                  width: 100,
+                  height: 100,
+                  color: Colors.grey[200],
+                  child: Center(
+                    child: Icon(
+                        Icons.fastfood,
+                        size: 40,
+                        color: Colors.grey[400]
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           Expanded(
@@ -220,7 +237,7 @@ class _CartPageState extends State<CartPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   Text('Total:', style: TextStyle(fontSize: 16, color: Colors.black), ),
+                  Text('Total:', style: TextStyle(fontSize: 16, color: Colors.black), ),
                   Text(
                     '\$${total.toStringAsFixed(2)}',
                     style: const TextStyle(
@@ -266,7 +283,6 @@ class _CartPageState extends State<CartPage> {
     if (user != null) {
       final newQuantity = item.quantity + change;
       if (newQuantity > 0) {
-        // CHANGE: Call updateItemQuantity instead of updateQuantity
         context.read<CartCubit>().updateItemQuantity(user.uid, item.itemId, newQuantity);
       } else {
         _removeItem(item);
@@ -472,7 +488,18 @@ class _CartPageState extends State<CartPage> {
     setState(() => _processingOrder = true);
 
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      final state = context.read<CartCubit>().state;
+      if (state is CartLoaded) {
+        final profile = await context.read<ProfileCubit>().getUserProfile(userId);
+        final address = profile?.address ?? 'No address set';
+
+        // ACTUALLY CONFIRM THE PURCHASE
+        await context.read<CartCubit>().confirmPurchase(
+          userId,
+          address,
+          'Cash on Delivery', // Payment method
+        );
+      }
 
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -483,8 +510,6 @@ class _CartPageState extends State<CartPage> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
-
-      context.read<CartCubit>().clearCart(userId);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -494,6 +519,17 @@ class _CartPageState extends State<CartPage> {
       );
     } finally {
       setState(() => _processingOrder = false);
+    }
+  }
+
+  // Add this method to get image URL from storage path
+  Future<String> _getImageUrl(String imagePath) async {
+    if (imagePath.isEmpty) return ''; // Handle empty paths
+    try {
+      return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
+    } catch (e) {
+      print('Error loading image: $e');
+      return ''; // Return empty string on error
     }
   }
 }

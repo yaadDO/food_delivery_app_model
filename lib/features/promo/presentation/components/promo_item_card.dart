@@ -1,6 +1,7 @@
 import 'package:badges/badges.dart' as badges;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // Add this import
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -37,17 +38,34 @@ class PromoItemCard extends StatelessWidget {
                   Expanded(
                     child: Stack(
                       children: [
-                        Hero(
-                          tag: item.id,
-                          child: CachedNetworkImage(
-                            imageUrl: item.imageUrl,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
+                        // Replace with FutureBuilder for Firebase Storage
+                        FutureBuilder<String>(
+                          future: _getImageUrl(item.imagePath),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.done) {
+                              if (snapshot.hasData) {
+                                return Hero(
+                                  tag: item.id,
+                                  child: CachedNetworkImage(
+                                    imageUrl: snapshot.data!,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      color: Colors.grey[200],
+                                      child: const Center(child: CircularProgressIndicator()),
+                                    ),
+                                    errorWidget: (context, url, error) => Container(
+                                      color: Colors.grey[200],
+                                      child: const Icon(Icons.error),
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
+                            return Container(
                               color: Colors.grey[200],
-                            ),
-                            errorWidget: (context, url, error) =>
-                            const Icon(Icons.error),
-                          ),
+                              child: const Center(child: CircularProgressIndicator()),
+                            );
+                          },
                         ),
                         Container(
                           decoration: BoxDecoration(
@@ -84,7 +102,7 @@ class PromoItemCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '${item.price.toStringAsFixed(2)}',
+                              '\$${item.price.toStringAsFixed(2)}',
                               style: GoogleFonts.poppins(
                                 color: Theme.of(context).colorScheme.inversePrimary,
                                 fontWeight: FontWeight.w700,
@@ -92,7 +110,7 @@ class PromoItemCard extends StatelessWidget {
                               ),
                             ),
                             Icon(Icons.arrow_circle_right_rounded,
-                                color: Theme.of(context).colorScheme.inversePrimary,),
+                              color: Theme.of(context).colorScheme.inversePrimary,),
                           ],
                         ),
                       ],
@@ -123,5 +141,10 @@ class PromoItemCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Helper method to get image URL from storage path
+  Future<String> _getImageUrl(String imagePath) async {
+    return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
   }
 }

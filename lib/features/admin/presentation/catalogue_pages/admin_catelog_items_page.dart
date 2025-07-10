@@ -8,9 +8,9 @@ import 'package:food_delivery/features/catalogue/presentation/cubits/catalog_cub
 import 'package:food_delivery/features/catalogue/presentation/pages/item_page_detail.dart';
 
 class AdminCategoryItemsPage extends StatefulWidget {
-  final Category category;
+  final String categoryId;
 
-  const AdminCategoryItemsPage({super.key, required this.category});
+  const AdminCategoryItemsPage({super.key, required this.categoryId});
 
   @override
   State<AdminCategoryItemsPage> createState() => _AdminCategoryItemsPageState();
@@ -18,17 +18,21 @@ class AdminCategoryItemsPage extends StatefulWidget {
 
 class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
   @override
-  void initState() {
-    super.initState();
-    context.read<CatalogCubit>().loadItemsForCategory(widget.category.id);
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.category.name),
-
+        title: BlocBuilder<CatalogCubit, CatalogState>(
+          builder: (context, state) {
+            if (state is CatalogDataLoaded) {
+              final category = state.categories.firstWhere(
+                    (c) => c.id == widget.categoryId,
+                orElse: () => Category(id: '', name: '', imagePath: ''),
+              );
+              return Text(category.name);
+            }
+            return const Text('Category Items');
+          },
+        ),
       ),
       body: BlocBuilder<CatalogCubit, CatalogState>(
         builder: (context, state) {
@@ -40,8 +44,8 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
           }
           if (state is CatalogDataLoaded) {
             final category = state.categories.firstWhere(
-                  (c) => c.id == widget.category.id,
-              orElse: () => Category(id: '', name: '', imageUrl: ''),
+                  (c) => c.id == widget.categoryId,
+              orElse: () => Category(id: '', name: '', imagePath: ''),
             );
 
             if (category.items.isEmpty) {
@@ -78,16 +82,28 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
   }
 
   void _navigateToAddItem(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddItemPage(category: widget.category),
-      ),
-    );
-  }
+    final state = BlocProvider.of<CatalogCubit>(context).state;
 
-  void _navigateToEditCategory(BuildContext context) {
-    // Implement category editing navigation
+    if (state is CatalogDataLoaded) {
+      final category = state.categories.firstWhere(
+            (c) => c.id == widget.categoryId,
+        orElse: () => Category(id: '', name: '', imagePath: ''),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddItemPage(category: category),
+        ),
+      );
+    } else {
+      // Handle error state - show message or reload data
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Category data not loaded')),
+      );
+      // Optionally reload categories
+      BlocProvider.of<CatalogCubit>(context).loadCategories();
+    }
   }
 
   void _navigateToItemDetail(BuildContext context, CatalogItem item) {
@@ -99,4 +115,3 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
     );
   }
 }
-

@@ -4,29 +4,34 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 import 'package:food_delivery/features/promo/domain/repository/promo_repo.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:uuid/uuid.dart';
 
 class FirebasePromoRepo implements PromoRepo {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  final Uuid _uuid = Uuid();
 
   @override
   Future<PromoItem> addItem(PromoItem item, [Uint8List? imageBytes]) async {
+    if (imageBytes == null) {
+      throw Exception('Image is required');
+    }
+
     try {
-      String? imageUrl = item.imageUrl;
+      // Generate unique image path
+      final imagePath = 'promo_images/${_uuid.v4()}.jpg';
+      final storageRef = _storage.ref().child(imagePath);
+      await storageRef.putData(imageBytes);
 
-      if (imageBytes != null) {
-        final storageRef = _storage
-            .ref()
-            .child('promo_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
-        await storageRef.putData(imageBytes);
-        imageUrl = await storageRef.getDownloadURL();
-      }
-
+      // Create document with image path
       final docRef = _firestore.collection('promo').doc();
-      final itemWithImage = item.copyWith(imageUrl: imageUrl);
-      await docRef.set(itemWithImage.toJson());
+      final newItem = item.copyWith(
+        id: docRef.id,
+        imagePath: imagePath, // Use imagePath instead of imageUrl
+      );
 
-      return itemWithImage.copyWith(id: docRef.id);
+      await docRef.set(newItem.toJson());
+      return newItem;
     } catch (e) {
       throw Exception('Error adding item: ${e.toString()}');
     }
@@ -35,17 +40,22 @@ class FirebasePromoRepo implements PromoRepo {
   @override
   Future<PromoItem> updateItem(PromoItem item, [Uint8List? imageBytes]) async {
     try {
-      String? imageUrl = item.imageUrl;
+      String imagePath = item.imagePath;
 
+      // Upload new image if provided
       if (imageBytes != null) {
-        final storageRef = _storage
-            .ref()
-            .child('promo_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
-        await storageRef.putData(imageBytes);
-        imageUrl = await storageRef.getDownloadURL();
+        // Delete old image
+        if (imagePath.isNotEmpty) {
+          await _storage.ref(imagePath).delete();
+        }
+
+        // Upload new image
+        imagePath = 'promo_images/${_uuid.v4()}.jpg';
+        await _storage.ref(imagePath).putData(imageBytes);
       }
 
-      final updatedItem = item.copyWith(imageUrl: imageUrl);
+      // Update document with new image path
+      final updatedItem = item.copyWith(imagePath: imagePath);
       await _firestore.collection('promo').doc(item.id).update(updatedItem.toJson());
 
       return updatedItem;
@@ -57,7 +67,15 @@ class FirebasePromoRepo implements PromoRepo {
   @override
   Future<void> deleteItem(String itemId) async {
     try {
-      await _firestore.collection('promo').doc(itemId).delete();
+      // Get item first to delete image
+      final doc = await _firestore.collection('promo').doc(itemId).get();
+      if (doc.exists) {
+        final imagePath = doc['imagePath'] as String?;
+        if (imagePath != null && imagePath.isNotEmpty) {
+          await _storage.ref(imagePath).delete();
+        }
+        await doc.reference.delete();
+      }
     } catch (e) {
       throw Exception('Error deleting item: $e');
     }
@@ -68,11 +86,11 @@ class FirebasePromoRepo implements PromoRepo {
     try {
       final snapshot = await _firestore.collection('promo').get();
       return snapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
+        final data = doc.data();
         return PromoItem(
           id: doc.id,
           name: data['name'] ?? '',
-          imageUrl: data['imageUrl'] ?? '',
+          imagePath: data['imagePath'] ?? '', // Use imagePath
           price: (data['price'] as num).toDouble(),
           quantity: data['quantity'] as int,
           description: data['description'] ?? '',

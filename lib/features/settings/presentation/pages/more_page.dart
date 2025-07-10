@@ -77,18 +77,6 @@ class MorePage extends StatelessWidget {
                   ),
                   _buildMenuItem(
                     context,
-                    title: 'Payment Details',
-                    icon: Icons.credit_card,
-                    color: Colors.purple,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PaymentDetailsView(),
-                      ),
-                    ),
-                  ),
-                  _buildMenuItem(
-                    context,
                     title: 'Notifications',
                     icon: Icons.notifications_outlined,
                     color: Colors.orange,

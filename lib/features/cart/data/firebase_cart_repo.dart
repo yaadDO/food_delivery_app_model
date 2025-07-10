@@ -23,7 +23,7 @@ class FirebaseCartRepo implements CartRepo {
           'itemId': item.itemId,
           'name': item.name,
           'price': item.price,
-          'imageUrl': item.imageUrl,
+          'imagePath': item.imagePath, // Ensure this is set
           'quantity': item.quantity,
         });
       }
@@ -40,12 +40,13 @@ class FirebaseCartRepo implements CartRepo {
           .get();
 
       return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>? ?? {};
         return CartItem(
           itemId: doc.id,
-          name: doc['name'],
-          price: doc['price'].toDouble(),
-          imageUrl: doc['imageUrl'],
-          quantity: doc['quantity'] as int,
+          name: data['name'] as String? ?? 'Unknown Item',
+          price: (data['price'] as num?)?.toDouble() ?? 0.0,
+          imagePath: data['imagePath'] as String? ?? '', // Handle missing
+          quantity: data['quantity'] as int? ?? 0,
         );
       }).toList();
     } catch (e) {
@@ -112,6 +113,7 @@ class FirebaseCartRepo implements CartRepo {
       }) async {
     try {
       final orderDoc = _firestore.collection('orders').doc();
+      print('Creating order: ${orderDoc.id}'); // Debug log
       await orderDoc.set({
         'userId': userId,
         'items': items.map((item) => {
@@ -119,15 +121,18 @@ class FirebaseCartRepo implements CartRepo {
           'name': item.name,
           'price': item.price,
           'quantity': item.quantity,
+          'imagePath': item.imagePath,
         }).toList(),
         'total': items.fold(0.0, (sum, item) => sum + (item.price * item.quantity)),
         'timestamp': FieldValue.serverTimestamp(),
         'address': address,
         'status': 'Pending',
         'paymentMethod': paymentMethod,
-        'paymentIntentId': paymentIntentId, // Store Stripe payment ID
+        'paymentIntentId': paymentIntentId,
       });
+      print('Order created successfully: ${orderDoc.id}'); // Debug log
     } catch (e) {
+      print('Error creating order: $e'); // Debug log
       throw Exception('Error confirming purchase: $e');
     }
   }

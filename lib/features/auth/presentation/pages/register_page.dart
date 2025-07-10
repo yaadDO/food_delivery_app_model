@@ -7,6 +7,7 @@ import 'package:lottie/lottie.dart';
 import '../components/my_button.dart';
 import '../components/my_text_field.dart';
 import '../cubits/auth_cubit.dart';
+import '../cubits/auth_states.dart';
 
 class RegisterPage extends StatefulWidget {
   final void Function()? togglePages;
@@ -140,31 +141,37 @@ class _RegisterPageState extends State<RegisterPage>
                   obscureText: true,
                 ),
                 const SizedBox(height: 5),
-                MyButton(
-                  onTap: register,
-                  text: 'Register',
+                BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, state) {
+                    return MyButton(
+                      onTap: state is AuthLoading ? null : register,
+                      text: 'Register',
+                      isLoading: state is AuthLoading, // Added
+                    );
+                  },
                 ),
                 const SizedBox(height: 10),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const NavBar()));
-                  }, //=> context.read<AuthCubit>().signInWithGoogle(),
-                  icon: Image.asset(
-                    'assets/img/google_icon.png',
-                    width: 37,
-                    height: 37,
-                  ),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    padding: const EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
-                      side: BorderSide(color: Colors.grey.shade300),
-                    ),
-                  ),
+                BlocBuilder<AuthCubit, AuthState>(
+                  builder: (context, state) {
+                    return IconButton(
+                      onPressed: state is AuthLoading
+                          ? null
+                          : () => context.read<AuthCubit>().signInWithGoogle(),
+                      icon: Image.asset(
+                        'assets/img/google_icon.png',
+                        width: 37,
+                        height: 37,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50),
+                          side: BorderSide(color: Colors.grey.shade300),
+                        ),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 5),
                 Text(

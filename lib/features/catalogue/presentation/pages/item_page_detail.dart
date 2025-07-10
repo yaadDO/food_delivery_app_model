@@ -6,6 +6,7 @@ import 'package:food_delivery/features/cart/domain/entities/cart_item.dart';
 import 'package:food_delivery/features/cart/presentation/cubits/cart_cubit.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../domain/entities/catalog_item.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class ItemDetailPage extends StatelessWidget {
   final CatalogItem item;
@@ -29,11 +30,28 @@ class ItemDetailPage extends StatelessWidget {
           children: [
             Hero(
               tag: item.id,
-              child: CachedNetworkImage(
-                imageUrl: item.imageUrl,
-                width: double.infinity,
+              child: Container(
+                color: Colors.grey[200],
                 height: MediaQuery.of(context).size.height * 0.5,
-                fit: BoxFit.cover,
+                child: FutureBuilder<String>(
+                  future: _getImageUrl(item.imagePath),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (snapshot.hasData) {
+                        return CachedNetworkImage(
+                          imageUrl: snapshot.data!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: Colors.grey[200],
+                            child: const Center(child: CircularProgressIndicator()),
+                          ),
+                          errorWidget: (context, url, error) => const Icon(Icons.error),
+                        );
+                      }
+                    }
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                ),
               ),
             ),
             Padding(
@@ -100,7 +118,8 @@ class ItemDetailPage extends StatelessWidget {
                           itemId: item.id,
                           name: item.name,
                           price: item.price,
-                          imageUrl: item.imageUrl,
+                          quantity: 1, // Add this required parameter
+                          imagePath: item.imagePath,
                         );
                         context.read<CartCubit>().addToCart(userId, cartItem);
 
@@ -117,5 +136,9 @@ class ItemDetailPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<String> _getImageUrl(String imagePath) async {
+    return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
   }
 }

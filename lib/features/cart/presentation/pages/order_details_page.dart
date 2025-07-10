@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../data/orders_repo.dart';
 
@@ -19,11 +21,16 @@ class OrderDetailsPage extends StatefulWidget {
 class _OrderDetailsPageState extends State<OrderDetailsPage> {
   final FirebaseOrdersRepo ordersRepo = FirebaseOrdersRepo();
   late String _currentStatus;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   @override
   void initState() {
     super.initState();
     _currentStatus = widget.initialStatus;
+  }
+
+  Future<String> _getImageUrl(String imagePath) async {
+    return await _storage.ref(imagePath).getDownloadURL();
   }
 
   void _updateStatus() async {
@@ -70,9 +77,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
       body: FutureBuilder<DocumentSnapshot>(
         future: ordersRepo.getOrderDetails(widget.orderId),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) return CircularProgressIndicator();
+          if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
+          if (!snapshot.data!.exists) return Center(child: Text('Order not found'));
 
           final data = snapshot.data!.data() as Map<String, dynamic>;
+          final items = data['items'] as List<dynamic>;
 
           return Padding(
             padding: EdgeInsets.all(16.0),
@@ -98,15 +107,46 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold)),
+                SizedBox(height: 10),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: (data['items'] as List).length,
+                    itemCount: items.length,
                     itemBuilder: (context, index) {
-                      final item = data['items'][index];
-                      return ListTile(
-                        title: Text(item['name']),
-                        subtitle: Text('Quantity: ${item['quantity']}'),
-                        trailing: Text('\$${(item['price'] * item['quantity']).toStringAsFixed(2)}'),
+                      final item = items[index];
+                      return FutureBuilder<String>(
+                          future: _getImageUrl(item['imagePath']),
+                          builder: (context, imageSnapshot) {
+                            return ListTile(
+                              leading: imageSnapshot.hasData
+                                  ? CachedNetworkImage(
+                                imageUrl: imageSnapshot.data!,
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(
+                                  width: 50,
+                                  height: 50,
+                                  color: Colors.grey[200],
+                                  child: Center(child: CircularProgressIndicator()),
+                                ),
+                                errorWidget: (context, url, error) => Container(
+                                  width: 50,
+                                  height: 50,
+                                  color: Colors.grey[200],
+                                  child: Icon(Icons.error),
+                                ),
+                              )
+                                  : Container(
+                                width: 50,
+                                height: 50,
+                                color: Colors.grey[200],
+                                child: Icon(Icons.fastfood),
+                              ),
+                              title: Text(item['name']),
+                              subtitle: Text('Quantity: ${item['quantity']}'),
+                              trailing: Text('\$${(item['price'] * item['quantity']).toStringAsFixed(2)}'),
+                            );
+                          }
                       );
                     },
                   ),

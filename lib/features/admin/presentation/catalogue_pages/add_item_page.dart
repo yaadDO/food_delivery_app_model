@@ -1,8 +1,10 @@
+import 'dart:typed_data'; // Add this import for Uint8List
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/features/catalogue/domain/entities/catalog_item.dart';
 import 'package:food_delivery/features/catalogue/domain/entities/category.dart';
 import 'package:food_delivery/features/catalogue/presentation/cubits/catalog_cubit.dart';
+import 'package:image_picker/image_picker.dart'; // For image picking
 
 class AddItemPage extends StatefulWidget {
   final Category category;
@@ -19,7 +21,15 @@ class _AddItemPageState extends State<AddItemPage> {
   final _priceController = TextEditingController();
   final _quantityController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _imageController = TextEditingController();
+  Uint8List? _imageBytes; // Fixed type
+
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
+      setState(() => _imageBytes = bytes);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,16 +41,33 @@ class _AddItemPageState extends State<AddItemPage> {
           key: _formKey,
           child: ListView(
             children: [
+              // Image picker widget
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: _imageBytes != null
+                      ? Image.memory(_imageBytes!, fit: BoxFit.cover)
+                      : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.add_photo_alternate, size: 50),
+                      Text('Tap to add image'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Item Name'),
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
-              TextFormField(
-                controller: _imageController,
-                decoration: const InputDecoration(labelText: 'Image URL'),
-                validator: (value) => value!.isEmpty ? 'Required' : null,
-              ),
+              // Removed image URL field
               TextFormField(
                 controller: _priceController,
                 decoration: const InputDecoration(labelText: 'Price'),
@@ -76,18 +103,16 @@ class _AddItemPageState extends State<AddItemPage> {
       final newItem = CatalogItem(
         id: '',
         name: _nameController.text,
-        imageUrl: _imageController.text,
         price: double.parse(_priceController.text),
         quantity: int.parse(_quantityController.text),
         description: _descriptionController.text,
         categoryId: widget.category.id,
+        imagePath: '', // Will be set by repo
       );
 
-      context.read<CatalogCubit>().addItem(newItem).then((_) {
-        // Reload items for the category to ensure consistency
-        context.read<CatalogCubit>().loadItemsForCategory(widget.category.id);
-        Navigator.pop(context);
-      });
+      // Pass image bytes to cubit
+      context.read<CatalogCubit>().addItem(newItem, _imageBytes);
+      Navigator.pop(context);
     }
   }
 }

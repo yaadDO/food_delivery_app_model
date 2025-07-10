@@ -19,19 +19,15 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
   final _priceController = TextEditingController();
   final _quantityController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _imageController = TextEditingController();
   final _discountController = TextEditingController();
 
-  File? _imageFile;
-  Uint8List? _imageBytes;
+  Uint8List? _imageBytes; // Removed File, we only need bytes
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-        _imageBytes = _imageFile!.readAsBytesSync() as Uint8List?;
-      });
+      final bytes = await pickedFile.readAsBytes();
+      setState(() => _imageBytes = bytes);
     }
   }
 
@@ -53,18 +49,18 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: _imageFile != null
-                      ? Image.file(_imageFile!, fit: BoxFit.cover)
+                  child: _imageBytes != null
+                      ? Image.memory(_imageBytes!, fit: BoxFit.cover)
                       : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+                    children: const [
                       Icon(Icons.add_photo_alternate, size: 50),
                       Text('Tap to add image'),
                     ],
                   ),
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Item Name'),
@@ -76,7 +72,6 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
                 keyboardType: TextInputType.number,
                 validator: (value) => value!.isEmpty ? 'Required' : null,
               ),
-              // New discount percentage field
               TextFormField(
                 controller: _discountController,
                 decoration: const InputDecoration(
@@ -122,7 +117,7 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
       final newItem = PromoItem(
         id: '',
         name: _nameController.text,
-        imageUrl: '',
+        imagePath: '', // Will be set by repo after upload
         price: double.parse(_priceController.text),
         quantity: int.parse(_quantityController.text),
         description: _descriptionController.text,

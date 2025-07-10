@@ -14,8 +14,7 @@ class AdminCatalogScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-      CatalogCubit(FirebaseCatalogRepo())..loadCategories(),
+      create: (context) => CatalogCubit(FirebaseCatalogRepo())..loadCategories(),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Manage Catalog'),
@@ -48,8 +47,7 @@ class AdminCatalogScreen extends StatelessWidget {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              AdminCategoryItemsPage(category: category),
+                          builder: (context) => AdminCategoryItemsPage(categoryId: category.id),
                         ),
                       ),
                     );
@@ -63,7 +61,7 @@ class AdminCatalogScreen extends StatelessWidget {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => EditCatalogPage()),
+            MaterialPageRoute(builder: (context) => const EditCatalogPage()),
           ),
           icon: const Icon(Icons.add, color: Colors.white),
           label: const Text('Add Category', style: TextStyle(color: Colors.white)),

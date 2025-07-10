@@ -36,9 +36,14 @@ class CartAdmin extends StatelessWidget {
 
           // Sort non-delivered by timestamp (newest first)
           nonDelivered.sort((a, b) {
-            Timestamp aTime = (a.data() as Map<String, dynamic>)['timestamp'];
-            Timestamp bTime = (b.data() as Map<String, dynamic>)['timestamp'];
-            return bTime.compareTo(aTime);
+            dynamic aTime = (a.data() as Map<String, dynamic>)['timestamp'];
+            dynamic bTime = (b.data() as Map<String, dynamic>)['timestamp'];
+
+            // Handle null or missing timestamps
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+
+            return (bTime as Timestamp).compareTo(aTime as Timestamp);
           });
 
           // Sort delivered by timestamp (newest first)

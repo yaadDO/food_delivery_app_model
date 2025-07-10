@@ -1,15 +1,16 @@
+// cart_item.dart
 class CartItem {
   final String itemId;
   final String name;
   final double price;
-  final String imageUrl;
-  int quantity;
+  final int quantity;
+  final String imagePath;
 
   CartItem({
     required this.itemId,
     required this.name,
     required this.price,
-    required this.imageUrl,
-    this.quantity = 1,
+    required this.quantity,
+    required this.imagePath,
   });
 }

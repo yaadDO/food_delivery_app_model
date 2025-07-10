@@ -4,7 +4,7 @@ import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 class SearchItem {
   final String id;
   final String name;
-  final String imageUrl;
+  final String imagePath;
   final double price;
   final String description;
   final bool isPromo;
@@ -12,7 +12,7 @@ class SearchItem {
   SearchItem({
     required this.id,
     required this.name,
-    required this.imageUrl,
+    required this.imagePath,
     required this.price,
     required this.description,
     required this.isPromo,
@@ -21,7 +21,7 @@ class SearchItem {
   factory SearchItem.fromCatalog(CatalogItem item) => SearchItem(
     id: item.id,
     name: item.name,
-    imageUrl: item.imageUrl,
+    imagePath: item.imagePath, // Now matches CatalogItem property
     price: item.price,
     description: item.description,
     isPromo: false,
@@ -30,7 +30,7 @@ class SearchItem {
   factory SearchItem.fromPromo(PromoItem item) => SearchItem(
     id: item.id,
     name: item.name,
-    imageUrl: item.imageUrl,
+    imagePath: item.imagePath,
     price: item.price,
     description: item.description,
     isPromo: true,

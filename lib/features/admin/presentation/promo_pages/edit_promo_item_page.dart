@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 import 'package:food_delivery/features/promo/presentation/cubit/promo_cubit.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // Added import
 
 class EditPromoItemPage extends StatefulWidget {
   final PromoItem item;
@@ -24,33 +24,47 @@ class _EditPromoItemPageState extends State<EditPromoItemPage> {
   late TextEditingController _quantityController;
   late TextEditingController _descriptionController;
   late TextEditingController _discountController;
-  File? _imageFile;
   Uint8List? _imageBytes;
-  String? _currentImageUrl;
+  String? _currentImagePath;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.item.name);
-    _priceController = TextEditingController(text: widget.item.price.toString());
-    _quantityController = TextEditingController(
-        text: widget.item.quantity.toString());
-    _descriptionController = TextEditingController(
-        text: widget.item.description);
+    _priceController =
+        TextEditingController(text: widget.item.price.toString());
+    _quantityController =
+        TextEditingController(text: widget.item.quantity.toString());
+    _descriptionController =
+        TextEditingController(text: widget.item.description);
     _discountController = TextEditingController(
         text: widget.item.discountPercentage?.toString() ?? '');
-    _currentImageUrl = widget.item.imageUrl;
+    _currentImagePath =
+        widget.item.imagePath; // Use imagePath instead of imageUrl
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    _quantityController.dispose();
+    _descriptionController.dispose();
+    _discountController.dispose();
+    super.dispose();
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(
-        source: ImageSource.gallery, imageQuality: 85);
+    final pickedFile = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, imageQuality: 85);
     if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-        _imageBytes = _imageFile!.readAsBytesSync() as Uint8List?;
-      });
+      final bytes = await pickedFile.readAsBytes();
+      setState(() => _imageBytes = bytes);
     }
+  }
+
+  // Helper method to get download URL from Firebase Storage path
+  Future<String> _getImageUrl(String imagePath) async {
+    return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
   }
 
   void _submitForm() {
@@ -101,24 +115,36 @@ class _EditPromoItemPageState extends State<EditPromoItemPage> {
                     border: Border.all(color: Colors.grey),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: _imageFile != null
-                      ? Image.file(_imageFile!, fit: BoxFit.cover)
-                      : _currentImageUrl != null && _currentImageUrl!.isNotEmpty
-                      ? CachedNetworkImage(
-                    imageUrl: _currentImageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => const Center(
-                        child: CircularProgressIndicator()),
-                    errorWidget: (context, url, error) =>
-                    const Icon(Icons.error),
-                  )
-                      : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.add_photo_alternate, size: 50),
-                      Text('Tap to add image'),
-                    ],
-                  ),
+                  child: _imageBytes != null
+                      ? Image.memory(_imageBytes!, fit: BoxFit.cover)
+                      : (_currentImagePath != null &&
+                              _currentImagePath!.isNotEmpty
+                          ? FutureBuilder<String>(
+                              future: _getImageUrl(_currentImagePath!),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                        ConnectionState.done &&
+                                    snapshot.hasData) {
+                                  return CachedNetworkImage(
+                                    imageUrl: snapshot.data!,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => const Center(
+                                        child: CircularProgressIndicator()),
+                                    errorWidget: (context, url, error) =>
+                                        const Icon(Icons.error),
+                                  );
+                                }
+                                return const Center(
+                                    child: CircularProgressIndicator());
+                              },
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.add_photo_alternate, size: 50),
+                                Text('Tap to add image'),
+                              ],
+                            )),
                 ),
               ),
               const SizedBox(height: 20),

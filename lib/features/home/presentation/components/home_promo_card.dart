@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // Add this import
 
 import '../../../promo/domain/entities/promo_item.dart';
 
@@ -9,6 +10,11 @@ class HomePromoItemCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const HomePromoItemCard({super.key, required this.item, required this.onTap});
+
+  // Helper to get download URL from Firebase Storage path
+  Future<String> _getImageUrl(String imagePath) async {
+    return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +36,7 @@ class HomePromoItemCard extends StatelessWidget {
           ],
         ),
         child: Stack(
-          children: [ // Changed from 'child' to 'children'
+          children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -42,16 +48,27 @@ class HomePromoItemCard extends StatelessWidget {
                       children: [
                         Hero(
                           tag: item.id,
-                          child: CachedNetworkImage(
-                            imageUrl: item.imageUrl,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                            errorWidget: (context, url, error) => Icon(
-                              Icons.fastfood,
-                              color: Theme.of(context).colorScheme.inversePrimary,
-                            ),
+                          child: FutureBuilder<String>(
+                            future: _getImageUrl(item.imagePath),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.done &&
+                                  snapshot.hasData) {
+                                return CachedNetworkImage(
+                                  imageUrl: snapshot.data!,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    color: Theme.of(context).colorScheme.secondary,
+                                  ),
+                                  errorWidget: (context, url, error) => Icon(
+                                    Icons.fastfood,
+                                    color: Theme.of(context).colorScheme.inversePrimary,
+                                  ),
+                                );
+                              }
+                              return Container(
+                                color: Theme.of(context).colorScheme.secondary,
+                              );
+                            },
                           ),
                         ),
                         Container(
@@ -90,7 +107,7 @@ class HomePromoItemCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '${item.price.toStringAsFixed(2)}',
+                            '\$${item.price.toStringAsFixed(2)}', // Added dollar sign
                             style: GoogleFonts.poppins(
                               color: Theme.of(context).colorScheme.inversePrimary,
                               fontWeight: FontWeight.w700,
@@ -134,7 +151,9 @@ class HomePromoItemCard extends StatelessWidget {
                 ),
                 child: Text(
                   // Use existing field or fallback to "SALE"
-                  item.discountPercentage?.toStringAsFixed(0) ?? 'SALE',
+                  item.discountPercentage != null
+                      ? '${item.discountPercentage!.toStringAsFixed(0)}% OFF'
+                      : 'SALE',
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontSize: 12,

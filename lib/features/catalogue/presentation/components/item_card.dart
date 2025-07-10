@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../domain/entities/catalog_item.dart';
@@ -8,6 +9,11 @@ class ItemCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const ItemCard({super.key, required this.item, required this.onTap});
+
+  Future<String> _getImageUrl(String imagePath) async {
+    if (imagePath.isEmpty) return '';
+    return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,33 +38,38 @@ class ItemCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
-                child: Stack(
-                  children: [
-                    Hero(
-                      tag: item.id,
-                      child: CachedNetworkImage(
-                        imageUrl: item.imageUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: Colors.grey[200],
-                        ),
-                        errorWidget: (context, url, error) =>
-                        const Icon(Icons.error),
+                child: FutureBuilder<String>(
+                  future: _getImageUrl(item.imagePath),
+                  builder: (context, snapshot) {
+                    // Handle different states
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Container(
+                        color: Colors.grey[200],
+                        child: const Center(child: CircularProgressIndicator()),
+                      );
+                    }
+
+                    if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Container(
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.fastfood, size: 60),
+                      );
+                    }
+
+                    final imageUrl = snapshot.data!;
+                    return CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey[200],
+                        child: const Center(child: CircularProgressIndicator()),
                       ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.7)
-                          ],
-                        ),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.error),
                       ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
               Padding(
@@ -81,7 +92,7 @@ class ItemCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '${item.price.toStringAsFixed(2)}',
+                          '\$${item.price.toStringAsFixed(2)}',
                           style: GoogleFonts.poppins(
                             color: Theme.of(context).colorScheme.inversePrimary,
                             fontWeight: FontWeight.w700,

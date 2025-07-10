@@ -39,7 +39,7 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
           if (state is CatalogDataLoaded) { // Changed from CatalogLoaded
             final category = state.categories.firstWhere(
                   (c) => c.id == widget.category.id,
-              orElse: () => Category(id: '', name: '', imageUrl: ''),
+              orElse: () => Category(id: '', name: '', imagePath: ''),
             );
 
             if (category.items.isEmpty) {

@@ -5,11 +5,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../domain/entities/app_user.dart';
 import '../domain/repository/auth_repo.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 
 class FirebaseAuthRepo implements AuthRepo {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   @override
   Future<AppUser?> loginWithEmailPassword(String email, String password) async {
@@ -65,35 +67,63 @@ class FirebaseAuthRepo implements AuthRepo {
       throw Exception('Registration Failed: $e');
     }
   }
-  /*Future<UserCredential?> signInWithGoogle() async {
+
+  @override
+  Future<AppUser?> signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? gUser = await GoogleSignIn().signIn();
-      if (gUser == null) return null;
+      // Trigger Google Sign In flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null;
 
-      final GoogleSignInAuthentication gAuth = await gUser.authentication;
+      // Obtain auth details
+      final GoogleSignInAuthentication googleAuth =
+      await googleUser.authentication;
 
-      final credential = GoogleAuthProvider.credential(
-        accessToken: gAuth.accessToken,
-        idToken: gAuth.idToken,
+      // Create Firebase credential
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
       );
 
+      // Sign in to Firebase
       final UserCredential userCredential =
       await firebaseAuth.signInWithCredential(credential);
 
-      // Check if new user
-      if (userCredential.additionalUserInfo!.isNewUser) {
-        await firebaseFirestore.collection('users').doc(userCredential.user!.uid).set({
-          'uid': userCredential.user!.uid,
-          'email': userCredential.user!.email,
-          'name': userCredential.user!.displayName ?? 'No Name',
-        });
+      // Check if user exists in Firestore
+      DocumentSnapshot userDoc = await firebaseFirestore
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      // Create new user if doesn't exist
+      if (!userDoc.exists) {
+        final newUser = AppUser(
+          uid: userCredential.user!.uid,
+          email: userCredential.user!.email!,
+          name: userCredential.user!.displayName ?? 'Google User',
+          isAdmin: false,
+        );
+
+        await firebaseFirestore
+            .collection('users')
+            .doc(newUser.uid)
+            .set(newUser.toJson());
+
+        return newUser;
       }
 
-      return userCredential;
+      // Return existing user
+      final userData = userDoc.data() as Map<String, dynamic>;
+      return AppUser(
+        uid: userCredential.user!.uid,
+        email: userCredential.user!.email!,
+        name: userData['name'] ?? 'Google User',
+        isAdmin: userData['isAdmin'] ?? false,
+      );
     } catch (e) {
-      throw Exception('Google sign-in failed: $e');
+      throw Exception('Google Sign-In Failed: $e');
     }
-  }*/
+  }
 
   @override
   Future<void> logout() async {

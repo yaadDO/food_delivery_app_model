@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // Added import
 import 'package:flutter/material.dart';
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 
@@ -14,6 +15,12 @@ class AdminPromoItemCard extends StatelessWidget {
     required this.onDelete,
   });
 
+  // Add this method to get download URL from Firebase Storage path
+  Future<String> _getImageUrl(String imagePath) async {
+    if (imagePath.isEmpty) return '';
+    return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -25,14 +32,30 @@ class AdminPromoItemCard extends StatelessWidget {
           Expanded(
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-              child: CachedNetworkImage(
-                imageUrl: item.imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[200],
-                  child: const Center(child: CircularProgressIndicator()),
-                ),
-                errorWidget: (context, url, error) => const Icon(Icons.error),
+              child: FutureBuilder<String>(
+                future: _getImageUrl(item.imagePath), // Use imagePath instead of imageUrl
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                      return CachedNetworkImage(
+                        imageUrl: snapshot.data!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[200],
+                          child: const Center(child: CircularProgressIndicator()),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.error),
+                        ),
+                      );
+                    }
+                  }
+                  return Container(
+                    color: Colors.grey[200],
+                    child: const Center(child: CircularProgressIndicator()),
+                  );
+                },
               ),
             ),
           ),

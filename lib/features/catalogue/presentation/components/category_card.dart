@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:food_delivery/features/catalogue/domain/entities/category.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class CategoryCard extends StatelessWidget {
   final Category category;
@@ -11,6 +12,7 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageRef = FirebaseStorage.instance.ref().child(category.imagePath);
     return Material(
       borderRadius: BorderRadius.circular(20),
       elevation: 4,
@@ -18,25 +20,31 @@ class CategoryCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
-        child: SizedBox(  // Add SizedBox to control width
+        child: SizedBox(
           width: MediaQuery.of(context).size.width * 0.9,  // 90% of screen width
           child: Stack(
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: CachedNetworkImage(
-                  imageUrl: category.imageUrl,
-                  height: 180,
-                  width: double.infinity,  // Will expand to parent constraints
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: Colors.grey[200],
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.error),
-                  ),
+                child: FutureBuilder<String>(
+                  future: _getImageUrl(category.imagePath),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      if (snapshot.hasData) {
+                        return Image.network(
+                          snapshot.data!,
+                          height: 180,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        );
+                      }
+                    }
+                    return Container(
+                      color: Colors.grey[200],
+                      height: 180,
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  },
                 ),
               ),
               Positioned.fill(
@@ -83,5 +91,8 @@ class CategoryCard extends StatelessWidget {
         ),
       ),
     );
+  }
+  Future<String> _getImageUrl(String imagePath) async {
+    return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
   }
 }

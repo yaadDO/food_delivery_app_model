@@ -7,6 +7,7 @@ import '../../../admin/presentation/home/admin_home_page.dart';
 import '../components/my_button.dart';
 import '../components/my_text_field.dart';
 import '../cubits/auth_cubit.dart';
+import '../cubits/auth_states.dart';
 
 class LoginPage extends StatefulWidget {
   final void Function()? togglePages;
@@ -118,28 +119,37 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                       obscureText: true,
                     ),
                     const SizedBox(height: 15),
-                    MyButton(
-                      onTap: login,
-                      text: 'Login',
+                    BlocBuilder<AuthCubit, AuthState>(
+                      builder: (context, state) {
+                        return MyButton(
+                          onTap: state is AuthLoading ? null : login,
+                          text: 'Login',
+                          isLoading: state is AuthLoading, // Added
+                        );
+                      },
                     ),
                     const SizedBox(height: 25),
-                    IconButton(
-                      onPressed: () {
-
+                    BlocBuilder<AuthCubit, AuthState>(
+                      builder: (context, state) {
+                        return IconButton(
+                          onPressed: state is AuthLoading
+                              ? null
+                              : () => context.read<AuthCubit>().signInWithGoogle(),
+                          icon: Image.asset(
+                            'assets/img/google_icon.png',
+                            width: 32,
+                            height: 32,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.all(16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50),
+                              side: BorderSide(color: Colors.grey.shade300),
+                            ),
+                          ),
+                        );
                       },
-                      icon: Image.asset(
-                        'assets/img/google_icon.png',
-                        width: 32,
-                        height: 32,
-                      ),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        padding: const EdgeInsets.all(16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(50),
-                          side: BorderSide(color: Colors.grey.shade300),
-                        ),
-                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(
@@ -188,26 +198,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                       ],
                     ),
                   ],
-                ),
-              ),
-            ),
-            // Added text button at top right
-            Positioned(
-              top: 10,
-              right: 20,
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const AdminHomePage()));
-                },
-                child: Text(
-                  'Admin Login',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                    fontSize: 14,
-                  ),
                 ),
               ),
             ),

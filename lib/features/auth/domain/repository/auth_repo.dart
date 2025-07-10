@@ -8,7 +8,5 @@ abstract class AuthRepo {
   Future<AppUser?> registerWithEmailPassword(String name, String email, String password);
   Future<void> logout();
   Future<AppUser?> getCurrentUser();
-
-  // New method for Google sign‑in
-  //Future<UserCredential?> signInWithGoogle();
-}
+  Future<AppUser?> signInWithGoogle();
+ }

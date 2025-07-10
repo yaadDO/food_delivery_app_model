@@ -4,6 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:food_delivery/features/catalogue/domain/entities/category.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // Add this import
 
 class HomeCategoryCard extends StatelessWidget {
   final Category category;
@@ -37,18 +38,33 @@ class HomeCategoryCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              CachedNetworkImage(
-                imageUrl: category.imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
-                  child: Container(color: Colors.white),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[200],
-                  child: const Icon(FontAwesomeIcons.utensils, color: Colors.white),
-                ),
+              // Replace with FutureBuilder for Firebase Storage
+              FutureBuilder<String>(
+                future: _getImageUrl(category.imagePath),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    if (snapshot.hasData) {
+                      return CachedNetworkImage(
+                        imageUrl: snapshot.data!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Shimmer.fromColors(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: Container(color: Colors.white),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey[200],
+                          child: const Icon(FontAwesomeIcons.utensils, color: Colors.white),
+                        ),
+                      );
+                    }
+                  }
+                  return Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(color: Colors.white),
+                  );
+                },
               ),
               Container(
                 decoration: BoxDecoration(
@@ -90,5 +106,10 @@ class HomeCategoryCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Helper method to get image URL from storage path
+  Future<String> _getImageUrl(String imagePath) async {
+    return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
   }
 }
