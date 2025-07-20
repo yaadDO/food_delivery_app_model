@@ -68,7 +68,7 @@ class _AdminPromoItemPageState extends State<AdminPromoItemPage> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
-                childAspectRatio: 0.8,
+                childAspectRatio: 0.7,
               ),
               itemCount: state.items.length,
               itemBuilder: (context, index) {
@@ -97,7 +97,6 @@ class _AdminPromoItemPageState extends State<AdminPromoItemPage> {
       context,
       MaterialPageRoute(builder: (context) => const AddPromoItemPage()),
     ).then((_) {
-      // Refresh after adding new item
       context.read<PromoCubit>().loadItems();
     });
   }
@@ -109,7 +108,6 @@ class _AdminPromoItemPageState extends State<AdminPromoItemPage> {
         builder: (context) => EditPromoItemPage(item: item),
       ),
     ).then((_) {
-      // Refresh after editing item
       context.read<PromoCubit>().loadItems();
     });
   }

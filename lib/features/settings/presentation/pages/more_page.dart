@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/features/notifications/presentation/pages/notification_page.dart';
-import 'package:food_delivery/features/payments/presentation/pages/payment_details_page.dart';
 import 'package:food_delivery/features/profile/presentation/pages/profile_view.dart';
 import 'package:food_delivery/features/themes/themes_cubit.dart';
 import 'package:share_plus/share_plus.dart';

@@ -21,7 +21,7 @@ class SearchItem {
   factory SearchItem.fromCatalog(CatalogItem item) => SearchItem(
     id: item.id,
     name: item.name,
-    imagePath: item.imagePath, // Now matches CatalogItem property
+    imagePath: item.imagePath,
     price: item.price,
     description: item.description,
     isPromo: false,

@@ -21,7 +21,7 @@ class CategoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.9,  // 90% of screen width
+          width: MediaQuery.of(context).size.width * 0.9,
           child: Stack(
             children: [
               ClipRRect(

@@ -69,7 +69,7 @@ class CartCubit extends Cubit<CartState> {
 
       await cartRepo.confirmPurchase(
         userId,
-        items, // Pass items as the second parameter
+        items,
         address,
         paymentMethod,
         paymentIntentId: paymentIntentId,

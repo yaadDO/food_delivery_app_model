@@ -1,7 +1,5 @@
-//auth repository - outlines the posible auth operations for this app
 import 'package:firebase_auth/firebase_auth.dart';
 import '../entities/app_user.dart';
-
 
 abstract class AuthRepo {
   Future<AppUser?> loginWithEmailPassword(String email, String password);

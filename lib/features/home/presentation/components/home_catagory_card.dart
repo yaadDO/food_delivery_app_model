@@ -4,7 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:food_delivery/features/catalogue/domain/entities/category.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // Add this import
+import 'package:firebase_storage/firebase_storage.dart';
 
 class HomeCategoryCard extends StatelessWidget {
   final Category category;
@@ -38,7 +38,6 @@ class HomeCategoryCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Replace with FutureBuilder for Firebase Storage
               FutureBuilder<String>(
                 future: _getImageUrl(category.imagePath),
                 builder: (context, snapshot) {

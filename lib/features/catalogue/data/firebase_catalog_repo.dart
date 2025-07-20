@@ -14,23 +14,24 @@ class FirebaseCatalogRepo implements CatalogRepo {
   @override
   Future<List<Category>> getCategories() async {
     try {
-      final snapshot = await _firestore.collection('categories').get();
-      return await Future.wait(snapshot.docs.map((doc) async {
-        final data = doc.data() as Map<String, dynamic>? ?? {};
+      final categoriesSnapshot = await _firestore.collection('categories').get();
+      final allItems = await getAllCatalogItems();
 
-        // Handle empty image paths
+      return categoriesSnapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>? ?? {};
         final imagePath = data['imagePath'] as String? ?? '';
 
-        // Get items for this category
-        final items = await getItemsForCategory(doc.id);
+        final categoryItems = allItems.where(
+                (item) => item.categoryId == doc.id
+        ).toList();
 
         return Category(
           id: doc.id,
           name: data['name'] as String? ?? 'Unnamed Category',
           imagePath: imagePath,
-          items: items,
+          items: categoryItems,
         );
-      }));
+      }).toList();
     } catch (e) {
       throw Exception('Error fetching categories: $e');
     }
@@ -124,11 +125,11 @@ class FirebaseCatalogRepo implements CatalogRepo {
           .get();
 
       return snapshot.docs.map((doc) {
-        final data = doc.data();
+        final data = doc.data() as Map<String, dynamic>? ?? {};
         return CatalogItem(
           id: doc.id,
-          name: data['name'] as String? ?? '',
-          imagePath: data['imagePath'] as String? ?? '', // Add null check
+          name: data['name'] as String? ?? 'Unnamed Item',
+          imagePath: data['imagePath'] as String? ?? '',
           price: (data['price'] as num?)?.toDouble() ?? 0.0,
           quantity: data['quantity'] as int? ?? 0,
           description: data['description'] as String? ?? '',
@@ -139,6 +140,7 @@ class FirebaseCatalogRepo implements CatalogRepo {
       throw Exception('Error fetching items: $e');
     }
   }
+
 
   @override
   Future<CatalogItem> addItem(CatalogItem item, [Uint8List? imageBytes]) async {
@@ -220,15 +222,18 @@ class FirebaseCatalogRepo implements CatalogRepo {
   Future<List<CatalogItem>> getAllCatalogItems() async {
     try {
       final snapshot = await _firestore.collection('items').get();
-      return snapshot.docs.map((doc) => CatalogItem(
-        id: doc.id,
-        name: doc['name'],
-        imagePath: doc['imagePath'] ?? '', // Add this field
-        price: doc['price'].toDouble(),
-        quantity: doc['quantity'] as int,
-        description: doc['description'],
-        categoryId: doc['categoryId'],
-      )).toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>? ?? {};
+        return CatalogItem(
+          id: doc.id,
+          name: data['name'] as String? ?? 'Unnamed Item',
+          imagePath: data['imagePath'] as String? ?? '',
+          price: (data['price'] as num?)?.toDouble() ?? 0.0,
+          quantity: data['quantity'] as int? ?? 0,
+          description: data['description'] as String? ?? '',
+          categoryId: data['categoryId'] as String? ?? '',
+        );
+      }).toList();
     } catch (e) {
       throw Exception('Error fetching all items: $e');
     }

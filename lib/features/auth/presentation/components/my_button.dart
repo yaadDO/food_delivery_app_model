@@ -41,7 +41,7 @@ class MyButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(13),
           ),
-          minimumSize: const Size(double.infinity, 56), // Exact match to text field height
+          minimumSize: const Size(double.infinity, 56),
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
         child: isLoading

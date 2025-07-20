@@ -1,4 +1,4 @@
-import 'dart:typed_data'; // Fix Uint8List import
+import 'dart:typed_data';
 import 'package:bloc/bloc.dart';
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 import 'package:food_delivery/features/promo/domain/repository/promo_repo.dart';

@@ -11,64 +11,63 @@ class CatalogPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => CatalogCubit(FirebaseCatalogRepo())..loadCategories(),
-      child: Scaffold(
-        body: BlocBuilder<CatalogCubit, CatalogState>(
-          builder: (context, state) {
-            if (state is CatalogLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (state is CatalogDataLoaded) { // Changed from CatalogLoaded
-              return AnimationLimiter(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 30.0),
-                  child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    slivers: [
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        sliver: SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                              final category = state.categories[index]; // Now uses CatalogDataLoaded
-                              return AnimationConfiguration.staggeredList(
-                                position: index,
-                                duration: const Duration(milliseconds: 500),
-                                child: SlideAnimation(
-                                  verticalOffset: 50.0,
-                                  child: FadeInAnimation(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0,
-                                        vertical: 8.0,
-                                      ),
-                                      child: CategoryCard(
-                                        category: category,
-                                        onTap: () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => CategoryItemsPage(category: category),
-                                          ),
+    return Scaffold(
+      body: BlocBuilder<CatalogCubit, CatalogState>(
+        builder: (context, state) {
+          if (state is CatalogLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state is CatalogDataLoaded) {
+            return AnimationLimiter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 30.0),
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final category = state.categories[index];
+                            return AnimationConfiguration.staggeredList(
+                              position: index,
+                              duration: const Duration(milliseconds: 500),
+                              child: SlideAnimation(
+                                verticalOffset: 50.0,
+                                child: FadeInAnimation(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0,
+                                      vertical: 8.0,
+                                    ),
+                                    child: CategoryCard(
+                                      category: category,
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              CategoryItemsPage(
+                                                  category: category),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              );
-                            },
-                            childCount: state.categories.length,
-                          ),
+                              ),
+                            );
+                          },
+                          childCount: state.categories.length,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              );
-            }
-            return Container();
-          },
-        ),
+              ),
+            );
+          }
+          return Container();
+        },
       ),
     );
   }

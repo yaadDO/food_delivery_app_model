@@ -108,8 +108,6 @@ class _MyAppState extends State<MyApp> {
                 final currentUserId =
                     context.read<AuthCubit>().currentUser!.uid;
                 context.read<ProfileCubit>().fetchUserProfile(currentUserId);
-
-                // ADDED: Clear navigation stack after successful auth
                 navigatorKey.currentState?.popUntil((route) => route.isFirst);
               }
             },

@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 import 'package:food_delivery/features/promo/presentation/cubit/promo_cubit.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // Added import
+import 'package:firebase_storage/firebase_storage.dart';
 
 class EditPromoItemPage extends StatefulWidget {
   final PromoItem item;
@@ -40,7 +40,7 @@ class _EditPromoItemPageState extends State<EditPromoItemPage> {
     _discountController = TextEditingController(
         text: widget.item.discountPercentage?.toString() ?? '');
     _currentImagePath =
-        widget.item.imagePath; // Use imagePath instead of imageUrl
+        widget.item.imagePath;
   }
 
   @override
@@ -62,7 +62,6 @@ class _EditPromoItemPageState extends State<EditPromoItemPage> {
     }
   }
 
-  // Helper method to get download URL from Firebase Storage path
   Future<String> _getImageUrl(String imagePath) async {
     return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
   }

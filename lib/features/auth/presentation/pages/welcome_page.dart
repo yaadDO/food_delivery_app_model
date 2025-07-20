@@ -157,10 +157,8 @@ class WelcomeView extends StatelessWidget {
                 ),
               ),
               SizedBox(height: size.height * 0.05),
-              // Social Login Options
 
               SizedBox(height: size.height * 0.03),
-
             ],
           ),
         ),

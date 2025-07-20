@@ -32,7 +32,6 @@ class PromoItemDetailPage extends StatelessWidget {
               tag: item.id,
               child: Stack(
                 children: [
-                  // Replace with FutureBuilder for Firebase Storage
                   FutureBuilder<String>(
                     future: _getImageUrl(item.imagePath),
                     builder: (context, snapshot) {
@@ -132,8 +131,8 @@ class PromoItemDetailPage extends StatelessWidget {
                           itemId: item.id,
                           name: item.name,
                           price: item.price,
-                          imagePath: item.imagePath, // Use imagePath instead of imageUrl
-                          quantity: 1, // Add quantity parameter
+                          imagePath: item.imagePath,
+                          quantity: 1,
                         );
                         context.read<CartCubit>().addToCart(userId, cartItem);
 

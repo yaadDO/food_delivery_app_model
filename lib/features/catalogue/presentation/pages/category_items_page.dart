@@ -19,7 +19,6 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
   @override
   void initState() {
     super.initState();
-    context.read<CatalogCubit>().loadItemsForCategory(widget.category.id);
   }
 
   @override
@@ -30,41 +29,43 @@ class _CategoryItemsPageState extends State<CategoryItemsPage> {
       ),
       body: BlocBuilder<CatalogCubit, CatalogState>(
         builder: (context, state) {
-          if (state is CatalogLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (state is CatalogError) {
-            return Center(child: Text(state.message));
-          }
-          if (state is CatalogDataLoaded) { // Changed from CatalogLoaded
-            final category = state.categories.firstWhere(
+          Category category = widget.category;
+
+          // Get updated category from state if available
+          if (state is CatalogDataLoaded) {
+            final updatedCategory = state.categories.firstWhere(
                   (c) => c.id == widget.category.id,
-              orElse: () => Category(id: '', name: '', imagePath: ''),
+              orElse: () => category,
             );
-
-            if (category.items.isEmpty) {
-              return const Center(child: Text('No items available'));
+            if (updatedCategory.items.isNotEmpty) {
+              category = updatedCategory;
             }
-
-            return GridView.builder(
-              padding: const EdgeInsets.all(8),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 0.8,
-              ),
-              itemCount: category.items.length,
-              itemBuilder: (context, index) {
-                final item = category.items[index];
-                return ItemCard(
-                  item: item,
-                  onTap: () => _navigateToItemDetail(context, item),
-                );
-              },
-            );
           }
-          return Container();
+
+          if (category.items.isEmpty) {
+            if (state is CatalogLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            return const Center(child: Text('No items available'));
+          }
+
+          return GridView.builder(
+            padding: const EdgeInsets.all(8),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 0.8,
+            ),
+            itemCount: category.items.length,
+            itemBuilder: (context, index) {
+              final item = category.items[index];
+              return ItemCard(
+                item: item,
+                onTap: () => _navigateToItemDetail(context, item),
+              );
+            },
+          );
         },
       ),
     );

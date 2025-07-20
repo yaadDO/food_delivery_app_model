@@ -23,7 +23,7 @@ class FirebaseCartRepo implements CartRepo {
           'itemId': item.itemId,
           'name': item.name,
           'price': item.price,
-          'imagePath': item.imagePath, // Ensure this is set
+          'imagePath': item.imagePath,
           'quantity': item.quantity,
         });
       }
@@ -45,7 +45,7 @@ class FirebaseCartRepo implements CartRepo {
           itemId: doc.id,
           name: data['name'] as String? ?? 'Unknown Item',
           price: (data['price'] as num?)?.toDouble() ?? 0.0,
-          imagePath: data['imagePath'] as String? ?? '', // Handle missing
+          imagePath: data['imagePath'] as String? ?? '',
           quantity: data['quantity'] as int? ?? 0,
         );
       }).toList();
@@ -113,7 +113,7 @@ class FirebaseCartRepo implements CartRepo {
       }) async {
     try {
       final orderDoc = _firestore.collection('orders').doc();
-      print('Creating order: ${orderDoc.id}'); // Debug log
+      print('Creating order: ${orderDoc.id}');
       await orderDoc.set({
         'userId': userId,
         'items': items.map((item) => {
@@ -130,9 +130,9 @@ class FirebaseCartRepo implements CartRepo {
         'paymentMethod': paymentMethod,
         'paymentIntentId': paymentIntentId,
       });
-      print('Order created successfully: ${orderDoc.id}'); // Debug log
+      print('Order created successfully: ${orderDoc.id}');
     } catch (e) {
-      print('Error creating order: $e'); // Debug log
+      print('Error creating order: $e');
       throw Exception('Error confirming purchase: $e');
     }
   }

@@ -9,7 +9,7 @@ class Category {
   Category({
     required this.id,
     required this.name,
-    this.imagePath = '',  // Ensure default empty string
+    this.imagePath = '',
     List<CatalogItem>? items,
   }) : items = items ?? [];
 
@@ -26,4 +26,14 @@ class Category {
       items: items ?? this.items,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Category &&
+              runtimeType == other.runtimeType &&
+              id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }

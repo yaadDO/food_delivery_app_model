@@ -24,16 +24,11 @@ class HomePage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) =>
-              CatalogCubit(FirebaseCatalogRepo())..loadCategories(),
-        ),
-        BlocProvider(
           create: (context) => PromoCubit(FirebasePromoRepo())..loadItems(),
         ),
         BlocProvider(
           create: (context) {
             final cubit = ProfileCubit(profileRepo: FirebaseProfileRepo());
-            // Fetch profile if user is logged in
             final user = FirebaseAuth.instance.currentUser;
             if (user != null) {
               cubit.fetchUserProfile(user.uid);
@@ -134,18 +129,25 @@ class HomePage extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 20),
                   itemCount: state.categories.length,
                   itemBuilder: (context, index) {
+                    final category = state.categories[index];
                     return HomeCategoryCard(
-                      category: state.categories[index],
+                      category: category,
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => CategoryItemsPage(
-                              category: state.categories[index]),
+                          builder: (context) => BlocProvider.value(
+                            value: BlocProvider.of<CatalogCubit>(context),
+                            child: CategoryItemsPage(
+                              category: category,
+                            ),
+                          ),
                         ),
                       ),
                     );
                   },
                 );
+              } else if (state is CatalogError) {
+                return Center(child: Text(state.message));
               }
               return const Center(child: CircularProgressIndicator());
             },

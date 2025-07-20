@@ -69,8 +69,8 @@ class FirebaseProfileRepo implements ProfileRepo {
           email: data['email'] ?? '',
           name: data['name'] ?? '',
           bio: data['bio'] ?? '',
-          phoneNumber: data['phoneNumber']?.toString() ?? '', // Added
-          address: data['address']?.toString() ?? '',         // Added
+          phoneNumber: data['phoneNumber']?.toString() ?? '',
+          address: data['address']?.toString() ?? '',
         ));
       }
     }

@@ -118,7 +118,7 @@ class ItemDetailPage extends StatelessWidget {
                           itemId: item.id,
                           name: item.name,
                           price: item.price,
-                          quantity: 1, // Add this required parameter
+                          quantity: 1,
                           imagePath: item.imagePath,
                         );
                         context.read<CartCubit>().addToCart(userId, cartItem);

@@ -14,7 +14,7 @@ class PromoItem {
     required this.price,
     required this.quantity,
     required this.imagePath,
-    this.discountPercentage, // Made optional since it's nullable
+    this.discountPercentage,
   });
 
   Map<String, dynamic> toJson() {

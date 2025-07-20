@@ -15,7 +15,6 @@ class AdminPromoItemCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  // Add this method to get download URL from Firebase Storage path
   Future<String> _getImageUrl(String imagePath) async {
     if (imagePath.isEmpty) return '';
     return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
@@ -33,13 +32,13 @@ class AdminPromoItemCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
               child: FutureBuilder<String>(
-                future: _getImageUrl(item.imagePath), // Use imagePath instead of imageUrl
+                future: _getImageUrl(item.imagePath),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
                     if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                       return CachedNetworkImage(
                         imageUrl: snapshot.data!,
-                        fit: BoxFit.cover,
+                        fit: BoxFit.fill, // Changed to FILL
                         placeholder: (context, url) => Container(
                           color: Colors.grey[200],
                           child: const Center(child: CircularProgressIndicator()),

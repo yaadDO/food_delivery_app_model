@@ -54,7 +54,7 @@ class FirebaseAuthRepo implements AuthRepo {
         uid: userCredential.user!.uid,
         email: email,
         name: name,
-        isAdmin: email == "admin@once.com", // Only for testing
+        isAdmin: email == "admin@once.com",
       );
 
       await firebaseFirestore

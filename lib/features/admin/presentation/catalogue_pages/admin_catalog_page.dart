@@ -7,7 +7,6 @@ import 'package:food_delivery/features/catalogue/presentation/cubits/catalog_cub
 
 import 'edit_catalog_page.dart';
 
-
 class AdminCatalogScreen extends StatelessWidget {
   const AdminCatalogScreen({super.key});
 

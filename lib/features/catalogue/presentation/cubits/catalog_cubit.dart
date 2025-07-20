@@ -16,8 +16,16 @@ class CatalogCubit extends Cubit<CatalogState> {
     emit(CatalogLoading());
     try {
       final categories = await catalogRepo.getCategories();
-      final allItems = categories.expand((c) => c.items).toList();
-      emit(CatalogDataLoaded(categories, allItems));
+      final allItems = await catalogRepo.getAllCatalogItems();
+
+      final updatedCategories = categories.map((category) {
+        final categoryItems = allItems.where(
+                (item) => item.categoryId == category.id
+        ).toList();
+        return category.copyWith(items: categoryItems);
+      }).toList();
+
+      emit(CatalogDataLoaded(updatedCategories, allItems));
     } catch (e) {
       emit(CatalogError(e.toString()));
     }
@@ -52,10 +60,10 @@ class CatalogCubit extends Cubit<CatalogState> {
     try {
       await catalogRepo.deleteCategory(categoryId);
       final currentState = state;
-      if (currentState is CatalogDataLoaded) { // Changed
+      if (currentState is CatalogDataLoaded) {
         final updatedCategories = currentState.categories
             .where((c) => c.id != categoryId).toList();
-        emit(CatalogDataLoaded(updatedCategories, currentState.allItems)); // Updated
+        emit(CatalogDataLoaded(updatedCategories, currentState.allItems));
       }
     } catch (e) {
       emit(CatalogError(e.toString()));
@@ -66,8 +74,8 @@ class CatalogCubit extends Cubit<CatalogState> {
     try {
       if (state is! CatalogDataLoaded) return;
 
-      final items = await catalogRepo.getItemsForCategory(categoryId);
       final currentState = state as CatalogDataLoaded;
+      final items = await catalogRepo.getItemsForCategory(categoryId);
 
       final updatedCategories = currentState.categories.map((category) {
         if (category.id == categoryId) {
@@ -76,7 +84,6 @@ class CatalogCubit extends Cubit<CatalogState> {
         return category;
       }).toList();
 
-      // Update allItems
       final updatedAllItems = [
         ...currentState.allItems.where((i) => i.categoryId != categoryId),
         ...items
@@ -93,7 +100,6 @@ class CatalogCubit extends Cubit<CatalogState> {
       final newItem = await catalogRepo.addItem(item, imageBytes);
       final currentState = state;
       if (currentState is CatalogDataLoaded) {
-        // Create a new list of categories with updated items
         final updatedCategories = currentState.categories.map((category) {
           if (category.id == newItem.categoryId) {
             final updatedItems = List<CatalogItem>.from(category.items)
@@ -103,7 +109,6 @@ class CatalogCubit extends Cubit<CatalogState> {
           return category;
         }).toList();
 
-        // Create updated allItems list
         final updatedAllItems = List<CatalogItem>.from(currentState.allItems)
           ..add(newItem);
 
@@ -137,12 +142,11 @@ class CatalogCubit extends Cubit<CatalogState> {
     }
   }
 
-  Future<void> deleteItem(String itemId) async { // Remove categoryId parameter
+  Future<void> deleteItem(String itemId) async {
     try {
       await catalogRepo.deleteItem(itemId);
       final currentState = state;
       if (currentState is CatalogDataLoaded) {
-        // Find the item to get its categoryId
         final deletedItem = currentState.allItems.firstWhere(
               (item) => item.id == itemId,
           orElse: () => CatalogItem(
@@ -156,7 +160,6 @@ class CatalogCubit extends Cubit<CatalogState> {
           ),
         );
 
-        // Update categories
         final updatedCategories = currentState.categories.map((category) {
           if (category.id == deletedItem.categoryId) {
             final updatedItems = category.items
@@ -166,7 +169,6 @@ class CatalogCubit extends Cubit<CatalogState> {
           return category;
         }).toList();
 
-        // Update allItems
         final updatedAllItems = currentState.allItems
             .where((i) => i.id != itemId).toList();
 

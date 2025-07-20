@@ -1,4 +1,3 @@
-// notifications_state.dart
 part of 'notifications_cubit.dart';
 
 abstract class NotificationsState {}

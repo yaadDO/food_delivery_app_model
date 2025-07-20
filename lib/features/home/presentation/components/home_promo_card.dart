@@ -11,13 +11,17 @@ class HomePromoItemCard extends StatelessWidget {
 
   const HomePromoItemCard({super.key, required this.item, required this.onTap});
 
-  // Helper to get download URL from Firebase Storage path
   Future<String> _getImageUrl(String imagePath) async {
     return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
   }
 
   @override
   Widget build(BuildContext context) {
+    final hasDiscount = item.discountPercentage != null;
+    final discountedPrice = hasDiscount
+        ? item.price * (1 - item.discountPercentage! / 100)
+        : item.price;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -37,56 +41,46 @@ class HomePromoItemCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
+            // MAIN CONTENT COLUMN
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // IMAGE SECTION
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                   child: AspectRatio(
                     aspectRatio: 1.6,
-                    child: Stack(
-                      children: [
-                        Hero(
-                          tag: item.id,
-                          child: FutureBuilder<String>(
-                            future: _getImageUrl(item.imagePath),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState == ConnectionState.done &&
-                                  snapshot.hasData) {
-                                return CachedNetworkImage(
-                                  imageUrl: snapshot.data!,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
-                                    color: Theme.of(context).colorScheme.secondary,
-                                  ),
-                                  errorWidget: (context, url, error) => Icon(
-                                    Icons.fastfood,
-                                    color: Theme.of(context).colorScheme.inversePrimary,
-                                  ),
-                                );
-                              }
-                              return Container(
+                    child: Hero(
+                      tag: item.id,
+                      child: FutureBuilder<String>(
+                        future: _getImageUrl(item.imagePath),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.done &&
+                              snapshot.hasData) {
+                            return CachedNetworkImage(
+                              imageUrl: snapshot.data!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
                                 color: Theme.of(context).colorScheme.secondary,
-                              );
-                            },
-                          ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withOpacity(0.6),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: Colors.grey[200],
+                                child: Icon(
+                                  Icons.fastfood,
+                                  color: Theme.of(context).colorScheme.inversePrimary,
+                                ),
+                              ),
+                            );
+                          }
+                          return Container(
+                            color: Theme.of(context).colorScheme.secondary,
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
+                // TEXT CONTENT BELOW IMAGE
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
@@ -106,13 +100,31 @@ class HomePromoItemCard extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '\$${item.price.toStringAsFixed(2)}', // Added dollar sign
-                            style: GoogleFonts.poppins(
-                              color: Theme.of(context).colorScheme.inversePrimary,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 18,
-                            ),
+                          // PRICE SECTION
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Show original price with strikethrough if discounted
+                              if (hasDiscount)
+                                Text(
+                                  '\$${item.price.toStringAsFixed(2)}',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                              // Show discounted price or regular price
+                              Text(
+                                '\$${discountedPrice.toStringAsFixed(2)}',
+                                style: GoogleFonts.poppins(
+                                  color: Theme.of(context).colorScheme.inversePrimary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
                           ),
                           Container(
                             padding: const EdgeInsets.all(6),
@@ -133,6 +145,8 @@ class HomePromoItemCard extends StatelessWidget {
                 ),
               ],
             ),
+
+            // SALE ELEMENTS ON TOP OF IMAGE
             Positioned(
               top: 12,
               right: 12,
@@ -150,8 +164,7 @@ class HomePromoItemCard extends StatelessWidget {
                   ],
                 ),
                 child: Text(
-                  // Use existing field or fallback to "SALE"
-                  item.discountPercentage != null
+                  hasDiscount
                       ? '${item.discountPercentage!.toStringAsFixed(0)}% OFF'
                       : 'SALE',
                   style: GoogleFonts.poppins(
@@ -162,7 +175,31 @@ class HomePromoItemCard extends StatelessWidget {
                   ),
                 ),
               ),
-            )
+            ),
+            Positioned(
+              top: 12,
+              left: 12,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.local_offer,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
           ],
         ),
       ),

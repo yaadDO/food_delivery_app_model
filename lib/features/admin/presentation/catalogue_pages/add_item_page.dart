@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/features/catalogue/domain/entities/catalog_item.dart';
 import 'package:food_delivery/features/catalogue/domain/entities/category.dart';
 import 'package:food_delivery/features/catalogue/presentation/cubits/catalog_cubit.dart';
-import 'package:image_picker/image_picker.dart'; // For image picking
+import 'package:image_picker/image_picker.dart';
 
 class AddItemPage extends StatefulWidget {
   final Category category;
@@ -21,7 +21,7 @@ class _AddItemPageState extends State<AddItemPage> {
   final _priceController = TextEditingController();
   final _quantityController = TextEditingController();
   final _descriptionController = TextEditingController();
-  Uint8List? _imageBytes; // Fixed type
+  Uint8List? _imageBytes;
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -107,7 +107,7 @@ class _AddItemPageState extends State<AddItemPage> {
         quantity: int.parse(_quantityController.text),
         description: _descriptionController.text,
         categoryId: widget.category.id,
-        imagePath: '', // Will be set by repo
+        imagePath: '',
       );
 
       // Pass image bytes to cubit

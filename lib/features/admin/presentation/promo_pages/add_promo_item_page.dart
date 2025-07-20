@@ -21,7 +21,7 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
   final _descriptionController = TextEditingController();
   final _discountController = TextEditingController();
 
-  Uint8List? _imageBytes; // Removed File, we only need bytes
+  Uint8List? _imageBytes;
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -117,7 +117,7 @@ class _AddPromoItemPageState extends State<AddPromoItemPage> {
       final newItem = PromoItem(
         id: '',
         name: _nameController.text,
-        imagePath: '', // Will be set by repo after upload
+        imagePath: '',
         price: double.parse(_priceController.text),
         quantity: int.parse(_quantityController.text),
         description: _descriptionController.text,

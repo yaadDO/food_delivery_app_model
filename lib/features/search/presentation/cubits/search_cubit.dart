@@ -1,4 +1,3 @@
-// features/search/presentation/cubit/search_cubit.dart
 import 'package:bloc/bloc.dart';
 import 'package:food_delivery/features/search/domain/entities/search_item.dart';
 import 'package:food_delivery/features/search/domain/repository/search_repo.dart';

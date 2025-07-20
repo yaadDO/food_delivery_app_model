@@ -1,7 +1,7 @@
 class CatalogItem {
   final String id;
   final String name;
-  final String imagePath; // Added imagePath property
+  final String imagePath;
   final double price;
   final int quantity;
   final String description;
@@ -10,7 +10,7 @@ class CatalogItem {
   CatalogItem({
     required this.id,
     required this.name,
-    required this.imagePath, // Added to constructor
+    required this.imagePath,
     required this.price,
     required this.quantity,
     required this.description,
@@ -20,7 +20,7 @@ class CatalogItem {
   CatalogItem copyWith({
     String? id,
     String? name,
-    String? imagePath, // Added to copyWith
+    String? imagePath,
     double? price,
     int? quantity,
     String? description,
@@ -29,7 +29,7 @@ class CatalogItem {
     return CatalogItem(
       id: id ?? this.id,
       name: name ?? this.name,
-      imagePath: imagePath ?? this.imagePath, // Added
+      imagePath: imagePath ?? this.imagePath,
       price: price ?? this.price,
       quantity: quantity ?? this.quantity,
       description: description ?? this.description,

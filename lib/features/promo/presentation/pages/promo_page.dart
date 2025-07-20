@@ -41,7 +41,7 @@ class PromoPage extends StatelessWidget {
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 0.75,
+                    childAspectRatio: 0.65,
                   ),
                   itemCount: state.items.length,
                   itemBuilder: (context, index) {
@@ -69,7 +69,7 @@ class PromoPage extends StatelessWidget {
           crossAxisCount: 2,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 0.75,
+          childAspectRatio: 0.65,
         ),
         itemCount: 6,
         itemBuilder: (context, index) => Shimmer.fromColors(

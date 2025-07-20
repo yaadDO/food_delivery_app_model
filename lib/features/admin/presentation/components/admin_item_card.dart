@@ -15,7 +15,6 @@ class AdminItemCard extends StatelessWidget {
     required this.onTap,
   });
 
-  // Add this method to get download URL from Firebase Storage path
   Future<String> _getImageUrl(String imagePath) async {
     if (imagePath.isEmpty) return '';
     return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();

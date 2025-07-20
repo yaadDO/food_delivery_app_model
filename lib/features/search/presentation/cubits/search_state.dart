@@ -1,4 +1,3 @@
-// features/search/presentation/cubit/search_state.dart
 part of 'search_cubit.dart';
 
 abstract class SearchState {}
