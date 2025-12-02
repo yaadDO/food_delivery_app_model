@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Paystack Web Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Load Paystack script -->
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          max-width: 600px;
+          margin: 40px auto;
+          padding: 20px;
+          line-height: 1.6;
+        }
+        .success {
+          color: #28a745;
+          font-weight: bold;
+        }
+        .error {
+          color: #dc3545;
+          font-weight: bold;
+        }
+        .test-box {
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          padding: 20px;
+          margin: 20px 0;
+          background-color: #f9f9f9;
+        }
+        button {
+          background-color: #007bff;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 16px;
+        }
+        button:hover {
+          background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<h1>Paystack Web Integration Test</h1>
+
+<div class="test-box">
+    <h2>Test Results:</h2>
+
+    <div id="result1">
+        <p>1. Checking if Paystack script loaded...</p>
+    </div>
+
+    <div id="result2">
+        <p>2. Checking if interop.js loaded...</p>
+    </div>
+
+    <div id="result3">
+        <p>3. Testing paystackPopUp function...</p>
+    </div>
+
+    <div id="result4">
+        <p>4. Checking all requirements for Flutter integration...</p>
+    </div>
+</div>
+
+<div class="test-box">
+    <h2>Test Paystack Popup (Mock):</h2>
+    <button onclick="testPaystackPopup()">Test Paystack Popup</button>
+    <p><small>Note: This will try to open Paystack with test credentials</small></p>
+</div>
+
+<div id="summary" style="margin-top: 20px; font-size: 18px;"></div>
+
+<script>
+    // Include the interop.js file
+    function loadInteropJS() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'paystack_interop.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    // Main test function
+    async function runTests() {
+      console.log('Starting Paystack integration tests...');
+
+      // Test 1: Check if Paystack script loaded
+      const result1 = document.getElementById('result1');
+      if (typeof PaystackPop !== 'undefined') {
+        result1.innerHTML = '<p>1. <span class="success">✓ PASS</span> Paystack script loaded successfully!</p>';
+        console.log('✓ Paystack script loaded');
+      } else {
+        result1.innerHTML = '<p>1. <span class="error">✗ FAIL</span> Paystack script failed to load</p>';
+        console.error('✗ Paystack script failed to load');
+      }
+
+      // Test 2: Load and check interop.js
+      const result2 = document.getElementById('result2');
+      try {
+        await loadInteropJS();
+        // Wait a bit for script to load
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        if (typeof paystackPopUp === 'function') {
+          result2.innerHTML = '<p>2. <span class="success">✓ PASS</span> paystack_interop.js loaded successfully!</p>';
+          console.log('✓ paystack_interop.js loaded');
+        } else {
+          result2.innerHTML = '<p>2. <span class="error">✗ FAIL</span> paystackPopUp function not found in interop.js</p>';
+          console.error('✗ paystackPopUp function not found');
+        }
+      } catch (error) {
+        result2.innerHTML = '<p>2. <span class="error">✗ FAIL</span> Failed to load paystack_interop.js</p>';
+        console.error('✗ Failed to load interop.js:', error);
+      }
+
+      // Test 3: Test the paystackPopUp function
+      const result3 = document.getElementById('result3');
+      if (typeof paystackPopUp === 'function') {
+        // Check function parameters
+        const functionString = paystackPopUp.toString();
+        const expectedParams = ['publicKey', 'email', 'amount', 'ref', 'currency', 'onClosed', 'callback'];
+        let allParamsExist = true;
+
+        expectedParams.forEach(param => {
+          if (!functionString.includes(param)) {
+            allParamsExist = false;
+          }
+        });
+
+        if (allParamsExist) {
+          result3.innerHTML = '<p>3. <span class="success">✓ PASS</span> paystackPopUp function is properly defined!</p>';
+          console.log('✓ paystackPopUp function is proper');
+        } else {
+          result3.innerHTML = '<p>3. <span class="warning">⚠ WARNING</span> paystackPopUp function has incorrect parameters</p>';
+          console.warn('⚠ paystackPopUp function has incorrect parameters');
+        }
+      } else {
+        result3.innerHTML = '<p>3. <span class="error">✗ FAIL</span> paystackPopUp function not available</p>';
+        console.error('✗ paystackPopUp function not available');
+      }
+
+      // Test 4: Check all requirements
+      const result4 = document.getElementById('result4');
+      const summary = document.getElementById('summary');
+
+      const tests = [
+        typeof PaystackPop !== 'undefined',
+        typeof paystackPopUp === 'function',
+        document.querySelector('script[src*="paystack.co"]') !== null
+      ];
+
+      const passedTests = tests.filter(test => test).length;
+      const totalTests = tests.length;
+
+      if (passedTests === totalTests) {
+        result4.innerHTML = `<p>4. <span class="success">✓ PASS</span> All ${totalTests} requirements met!</p>`;
+        summary.innerHTML = `<h3 class="success">🎉 All tests passed! Paystack is ready for Flutter integration.</h3>`;
+        console.log('🎉 All tests passed!');
+      } else {
+        result4.innerHTML = `<p>4. <span class="error">✗ FAIL</span> Only ${passedTests}/${totalTests} requirements met</p>`;
+        summary.innerHTML = `<h3 class="error">❌ Some tests failed. Check the console for details.</h3>`;
+        console.error(`❌ Only ${passedTests}/${totalTests} tests passed`);
+      }
+    }
+
+    // Test function to try opening Paystack (mock)
+    function testPaystackPopup() {
+      if (typeof paystackPopUp !== 'function') {
+        alert('paystackPopUp function not available. Run tests first.');
+        return;
+      }
+
+      // Use test credentials
+      const testPublicKey = 'pk_test_dsdfghuytred2345678'; // This is a fake test key
+      const testEmail = 'customer@example.com';
+      const testAmount = '10000'; // 100 Naira in kobo
+      const testRef = 'test_ref_' + Date.now();
+      const testCurrency = 'NGN';
+
+      console.log('Testing Paystack popup with:');
+      console.log('- Public Key:', testPublicKey);
+      console.log('- Email:', testEmail);
+      console.log('- Amount:', testAmount);
+      console.log('- Reference:', testRef);
+      console.log('- Currency:', testCurrency);
+
+      try {
+        // Try to call the function
+        const result = paystackPopUp(
+          testPublicKey,
+          testEmail,
+          testAmount,
+          testRef,
+          testCurrency,
+          () => {
+            console.log('Paystack popup closed');
+            alert('Paystack popup closed (expected with test key)');
+          },
+          () => {
+            console.log('Paystack callback executed');
+            alert('Paystack callback executed');
+          }
+        );
+
+        if (result) {
+          console.log('Paystack popup opened successfully (might fail due to invalid key)');
+        } else {
+          console.log('Paystack popup returned false/null');
+        }
+      } catch (error) {
+        console.error('Error opening Paystack popup:', error);
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Run tests when page loads
+    window.addEventListener('DOMContentLoaded', runTests);
+
+    // Also log to console what we find
+    console.log('Paystack Test Page Loaded');
+    console.log('Current scripts loaded:');
+    document.querySelectorAll('script').forEach(script => {
+      console.log('-', script.src || 'inline script');
+    });
+</script>
+</body>
+</html>

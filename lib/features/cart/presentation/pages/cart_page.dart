@@ -4,7 +4,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:food_delivery/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:food_delivery/features/cart/presentation/cubits/cart_cubit.dart';
 import 'package:food_delivery/features/profile/presentation/cubits/profile_cubit.dart';
+import '../../../payments/payment_dialog.dart';
 import '../../domain/entities/cart_item.dart';
+
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -15,6 +17,7 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   bool _processingOrder = false;
+  String _selectedPaymentMethod = 'Cash on Delivery';
 
   @override
   void initState() {
@@ -113,7 +116,6 @@ class _CartPageState extends State<CartPage> {
             child: FutureBuilder<String>(
               future: _getImageUrl(item.imagePath),
               builder: (context, snapshot) {
-                // Show image if we have a valid URL
                 if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                   return Image.network(
                     snapshot.data!,
@@ -122,8 +124,6 @@ class _CartPageState extends State<CartPage> {
                     fit: BoxFit.cover,
                   );
                 }
-
-                // Show placeholder in all other cases
                 return Container(
                   width: 100,
                   height: 100,
@@ -317,15 +317,15 @@ class _CartPageState extends State<CartPage> {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, dialogSetState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text(
             'Confirm Order',
             textAlign: TextAlign.center,
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: _buildCheckoutContent(context, state.items, address),
-          actions: _buildDialogActions(context, setState, user.uid),
+          content: _buildCheckoutContent(context, state.items, address, dialogSetState),
+          actions: _buildDialogActions(context, dialogSetState, user.uid),
         ),
       ),
     );
@@ -335,114 +335,147 @@ class _CartPageState extends State<CartPage> {
       BuildContext context,
       List<CartItem> items,
       String address,
+      StateSetter dialogSetState,
       ) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.location_on_outlined, color: Theme.of(context).primaryColor),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Delivery Address',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    address,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.payment_outlined, color: Theme.of(context).primaryColor),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Payment Method',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Cash on Delivery',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Pay when your order arrives',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Subtotal', style: TextStyle(color: Colors.grey)),
-                  Text('Items', style: TextStyle(color: Colors.grey)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '\$${_calculateTotal(items).toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    '${items.length} item${items.length > 1 ? 's' : ''}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Divider(),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                  Text(
-                    '\$${_calculateTotal(items).toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
+              Icon(Icons.location_on_outlined, color: Theme.of(context).primaryColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Delivery Address',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[700],
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      address,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 20),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.payment_outlined, color: Theme.of(context).primaryColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Payment Method',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildPaymentMethodSelector(dialogSetState),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Subtotal', style: TextStyle(color: Colors.grey)),
+                    Text('Items', style: TextStyle(color: Colors.grey)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '\$${_calculateTotal(items).toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      '${items.length} item${items.length > 1 ? 's' : ''}',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Divider(),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    Text(
+                      '\$${_calculateTotal(items).toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodSelector(StateSetter dialogSetState) {
+    return Column(
+      children: [
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Radio<String>(
+            value: 'Cash on Delivery',
+            groupValue: _selectedPaymentMethod,
+            onChanged: (value) {
+              dialogSetState(() {
+                _selectedPaymentMethod = value!;
+              });
+            },
+          ),
+          title: const Text('Cash on Delivery'),
+          subtitle: const Text('Pay when your order arrives'),
+        ),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Radio<String>(
+            value: 'Paystack',
+            groupValue: _selectedPaymentMethod,
+            onChanged: (value) {
+              dialogSetState(() {
+                _selectedPaymentMethod = value!;
+              });
+            },
+          ),
+          title: const Text('Paystack'),
+          subtitle: const Text('Pay securely with card, bank, etc.'),
         ),
       ],
     );
@@ -450,7 +483,7 @@ class _CartPageState extends State<CartPage> {
 
   List<Widget> _buildDialogActions(
       BuildContext context,
-      StateSetter setState,
+      StateSetter dialogSetState,
       String userId,
       ) {
     return [
@@ -461,7 +494,7 @@ class _CartPageState extends State<CartPage> {
       ElevatedButton(
         onPressed: _processingOrder
             ? null
-            : () => _confirmOrder(context, setState, userId),
+            : () => _confirmOrder(context, dialogSetState, userId),
         style: ElevatedButton.styleFrom(
           backgroundColor: Theme.of(context).primaryColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -469,7 +502,14 @@ class _CartPageState extends State<CartPage> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
           child: _processingOrder
-              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              ? const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 2,
+            ),
+          )
               : const Text('Confirm Order', style: TextStyle(color: Colors.white)),
         ),
       ),
@@ -482,54 +522,86 @@ class _CartPageState extends State<CartPage> {
 
   Future<void> _confirmOrder(
       BuildContext context,
-      StateSetter setState,
+      StateSetter dialogSetState,
       String userId,
       ) async {
-    setState(() => _processingOrder = true);
+    dialogSetState(() => _processingOrder = true);
 
     try {
       final state = context.read<CartCubit>().state;
       if (state is CartLoaded) {
         final profile = await context.read<ProfileCubit>().getUserProfile(userId);
         final address = profile?.address ?? 'No address set';
+        final user = context.read<AuthCubit>().currentUser;
 
-        // ACTUALLY CONFIRM THE PURCHASE
-        await context.read<CartCubit>().confirmPurchase(
-          userId,
-          address,
-          'Cash on Delivery', // Payment method
-        );
+        if (_selectedPaymentMethod == 'Paystack') {
+          // Show Paystack payment dialog
+          final result = await showDialog<Map<String, dynamic>>(
+            context: context,
+            builder: (context) => PaystackPaymentDialog(
+              amount: _calculateTotal(state.items),
+              userEmail: user?.email ?? 'customer@example.com',
+              onPaymentComplete: (result) {
+                Navigator.pop(context, result); // Close dialog with result
+              },
+            ),
+          );
+
+          if (result?['success'] == true) {
+            await context.read<CartCubit>().confirmPurchase(
+              userId,
+              address,
+              _selectedPaymentMethod,
+              paymentReference: result?['paymentReference'],
+            );
+
+            Navigator.pop(context); // Close the checkout dialog
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Payment successful! Order confirmed.'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else {
+            // Payment was cancelled or failed
+            dialogSetState(() => _processingOrder = false);
+            return; // Don't close the checkout dialog
+          }
+        } else {
+          // Cash on delivery
+          await context.read<CartCubit>().confirmPurchase(
+            userId,
+            address,
+            _selectedPaymentMethod,
+          );
+
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Order confirmed! Your food is on the way'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
-
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Order confirmed! Your food is on the way'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
     } catch (e) {
+      dialogSetState(() => _processingOrder = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Order failed: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
-      setState(() => _processingOrder = false);
     }
   }
 
-  // Add this method to get image URL from storage path
   Future<String> _getImageUrl(String imagePath) async {
-    if (imagePath.isEmpty) return ''; // Handle empty paths
+    if (imagePath.isEmpty) return '';
     try {
       return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
     } catch (e) {
       print('Error loading image: $e');
-      return ''; // Return empty string on error
+      return '';
     }
   }
 }

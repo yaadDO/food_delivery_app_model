@@ -10,7 +10,7 @@ void main() async {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     await FirebaseApi.initNotifications();
   } catch (e) {
-    print("Firebase initialization failed: $e");
+    print("Initialization failed: $e");
   }
   runApp(MyApp());
 }

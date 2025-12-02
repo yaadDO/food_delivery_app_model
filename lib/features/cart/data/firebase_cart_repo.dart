@@ -87,6 +87,7 @@ class FirebaseCartRepo implements CartRepo {
     });
   }
 
+  @override
   Future<void> clearCart(String userId) async {
     try {
       final snapshot = await _firestore
@@ -109,11 +110,10 @@ class FirebaseCartRepo implements CartRepo {
       List<CartItem> items,
       String address,
       String paymentMethod, {
-        String? paymentIntentId,
+        String? paymentReference,
       }) async {
     try {
       final orderDoc = _firestore.collection('orders').doc();
-      print('Creating order: ${orderDoc.id}');
       await orderDoc.set({
         'userId': userId,
         'items': items.map((item) => {
@@ -128,11 +128,9 @@ class FirebaseCartRepo implements CartRepo {
         'address': address,
         'status': 'Pending',
         'paymentMethod': paymentMethod,
-        'paymentIntentId': paymentIntentId,
+        'paymentReference': paymentReference, // Store Paystack reference
       });
-      print('Order created successfully: ${orderDoc.id}');
     } catch (e) {
-      print('Error creating order: $e');
       throw Exception('Error confirming purchase: $e');
     }
   }

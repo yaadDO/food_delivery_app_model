@@ -63,6 +63,7 @@ class CartAdmin extends StatelessWidget {
               final data = order.data() as Map<String, dynamic>;
               final status = data['status'];
               final isDelivered = status == 'Delivered';
+              final paymentReference = data['paymentReference'] as String?;
 
               return FutureBuilder<String>(
                 future: _getUserName(data['userId']),
@@ -75,6 +76,9 @@ class CartAdmin extends StatelessWidget {
                       children: [
                         Text('Total: \$${data['total'].toStringAsFixed(2)}'),
                         Text('Payment: ${data['paymentMethod']}'),
+                        if (paymentReference != null && paymentReference.isNotEmpty)
+                          Text('Ref: $paymentReference',
+                              style: TextStyle(fontSize: 12, color: Colors.grey)),
                       ],
                     ),
                     trailing: Text(

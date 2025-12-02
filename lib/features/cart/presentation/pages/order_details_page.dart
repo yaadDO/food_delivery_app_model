@@ -82,6 +82,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
 
           final data = snapshot.data!.data() as Map<String, dynamic>;
           final items = data['items'] as List<dynamic>;
+          final paymentReference = data['paymentReference'] as String?;
 
           return Padding(
             padding: EdgeInsets.all(16.0),
@@ -99,6 +100,14 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 SizedBox(height: 8),
                 Text('Payment Method: ${data['paymentMethod']}',
                     style: TextStyle(fontSize: 16)),
+                if (paymentReference != null && paymentReference.isNotEmpty)
+                  Column(
+                    children: [
+                      SizedBox(height: 8),
+                      Text('Payment Reference: $paymentReference',
+                          style: TextStyle(fontSize: 14, color: Colors.grey)),
+                    ],
+                  ),
                 SizedBox(height: 8),
                 Text('Shipping Address: ${data['address']}',
                     style: TextStyle(fontSize: 18)),

@@ -18,6 +18,33 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
+  Future<void> processPayment(
+      String userId,
+      String address,
+      String paymentMethod, {
+        String? paymentReference, // Changed from paymentIntentId
+      }) async {
+    try {
+      final items = await cartRepo.getCartItems(userId);
+      if (paymentMethod.isEmpty) {
+        throw Exception('Please select a payment method');
+      }
+
+      await cartRepo.confirmPurchase(
+        userId,
+        items,
+        address,
+        paymentMethod,
+        paymentReference: paymentReference,
+      );
+
+      await clearCart(userId);
+    } catch (e) {
+      emit(CartError(e.toString()));
+      rethrow;
+    }
+  }
+
   Future<void> addToCart(String userId, CartItem item) async {
     try {
       await cartRepo.addToCart(userId, item);
@@ -59,7 +86,7 @@ class CartCubit extends Cubit<CartState> {
       String userId,
       String address,
       String paymentMethod, {
-        String? paymentIntentId,
+        String? paymentReference,
       }) async {
     try {
       final items = await cartRepo.getCartItems(userId);
@@ -72,7 +99,7 @@ class CartCubit extends Cubit<CartState> {
         items,
         address,
         paymentMethod,
-        paymentIntentId: paymentIntentId,
+        paymentReference: paymentReference,
       );
 
       await clearCart(userId);

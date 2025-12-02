@@ -7,10 +7,11 @@ abstract class CartRepo {
   Future<void> updateQuantity(String userId, String itemId, int newQuantity);
   Future<void> clearCart(String userId);
   Future<void> confirmPurchase(
-    String userId,
-    List<CartItem> items,
-    String address,
-    String paymentMethod, {
-        String? paymentIntentId,
-    });
+      String userId,
+      List<CartItem> items,
+      String address,
+      String paymentMethod, {
+        String? paymentReference, // Changed from paymentIntentId
+      });
 }
+
