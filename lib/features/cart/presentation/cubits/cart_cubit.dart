@@ -22,12 +22,19 @@ class CartCubit extends Cubit<CartState> {
       String userId,
       String address,
       String paymentMethod, {
-        String? paymentReference, // Changed from paymentIntentId
+        String? paymentReference,
       }) async {
     try {
       final items = await cartRepo.getCartItems(userId);
+
+      // Validate payment method
       if (paymentMethod.isEmpty) {
         throw Exception('Please select a payment method');
+      }
+
+      // Additional validation can be added here if needed
+      if (paymentMethod == 'Paystack' && (paymentReference == null || paymentReference.isEmpty)) {
+        throw Exception('Payment reference is required for Paystack payments');
       }
 
       await cartRepo.confirmPurchase(

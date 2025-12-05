@@ -17,6 +17,16 @@ class ChatCubit extends Cubit<ChatState> {
     }
   }
 
+  Future<void> markMessagesAsRead(String userId) async {
+    emit(ChatLoading());
+    try {
+      await chatRepo.markMessagesAsRead(userId);
+      emit(ChatSuccess());
+    } catch (e) {
+      emit(ChatError(e.toString()));
+    }
+  }
+
   Stream<List<Map<String, dynamic>>> getMessages(String userId) {
     return chatRepo.getMessages(userId);
   }

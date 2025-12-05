@@ -52,12 +52,46 @@ class FirebaseChatRepo implements ChatRepo {
   }
 
   @override
+  Future<void> markMessagesAsRead(String userId) async {
+    final chatDocRef = _firestore.collection('chats').doc(userId);
+
+    // Mark all user's unread messages as read
+    final unreadMessages = await _firestore.collection('chats').doc(userId)
+        .collection('messages')
+        .where('sender', isEqualTo: 'user')
+        .where('read', isEqualTo: false)
+        .get();
+
+    if (unreadMessages.docs.isNotEmpty) {
+      final batch = _firestore.batch();
+      for (final doc in unreadMessages.docs) {
+        batch.update(doc.reference, {'read': true});
+      }
+      await batch.commit();
+
+      // Reset unread count to 0
+      await chatDocRef.update({
+        'unread': 0,
+      });
+    }
+  }
+
+  @override
   Stream<List<Map<String, dynamic>>> getMessages(String userId) {
     return _firestore.collection('chats').doc(userId)
         .collection('messages')
         .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+        .map((snapshot) => snapshot.docs.map((doc) {
+      final data = doc.data();
+      return {
+        'id': doc.id,
+        'text': data['text'] ?? '',
+        'sender': data['sender'] ?? 'user',
+        'timestamp': data['timestamp'],
+        'read': data['read'] ?? false,
+      };
+    }).toList());
   }
 
   @override
@@ -74,14 +108,16 @@ class FirebaseChatRepo implements ChatRepo {
 
         chats.add({
           'userId': userId,
-          'userName': userData['name'] ?? 'Unknown User', // Fetch name
+          'userName': userData['name'] ?? 'Unknown User',
           'lastMessage': chatDoc['lastMessage'] ?? 'No messages',
           'unread': chatDoc['unread'] ?? 0,
+          'lastActive': chatDoc['lastActive'],
         });
       }
       return chats;
     });
   }
+
   Future<void> _sendNotification(String userId, String message, bool isAdmin) async {
     try {
       // Get user's FCM token from Firestore
@@ -110,5 +146,4 @@ class FirebaseChatRepo implements ChatRepo {
       print('Error sending notification: $e');
     }
   }
-
 }

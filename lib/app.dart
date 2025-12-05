@@ -109,6 +109,8 @@ class _MyAppState extends State<MyApp> {
                     context.read<AuthCubit>().currentUser!.uid;
                 context.read<ProfileCubit>().fetchUserProfile(currentUserId);
                 navigatorKey.currentState?.popUntil((route) => route.isFirst);
+              } else if (state is Unauthenticated) {
+                navigatorKey.currentState?.popUntil((route) => route.isFirst);
               }
             },
           ),

@@ -4,4 +4,5 @@ abstract class ChatRepo {
   Future<void> sendMessage(String userId, String text, bool isAdmin);
   Stream<List<Map<String, dynamic>>> getMessages(String userId);
   Stream<List<Map<String, dynamic>>> getAllChats();
+  Future<void> markMessagesAsRead(String userId);
 }

@@ -37,7 +37,6 @@ class MorePage extends StatelessWidget {
             slivers: [
               SliverList(
                 delegate: SliverChildListDelegate([
-
                   _buildMenuItem(
                     context,
                     title: 'Profile',
@@ -139,11 +138,12 @@ class MorePage extends StatelessWidget {
                                 child: const Text('Cancel'),
                               ),
                               TextButton(
-                                onPressed: () {
-                                  authCubit.logout();
-                                  Navigator.of(context)
-                                    ..pop() // Close dialog
-                                    ..pop(); // Close MorePage
+                                onPressed: () async {
+                                  // Close dialog
+                                  Navigator.of(context).pop();
+                                  // Logout
+                                  await authCubit.logout();
+                                  // No need to pop MorePage - the BlocConsumer will handle the navigation
                                 },
                                 child: const Text('Logout'),
                               ),

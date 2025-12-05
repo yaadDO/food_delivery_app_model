@@ -4,7 +4,7 @@ import 'package:food_delivery/features/cart/presentation/pages/cart_admin.dart';
 import 'package:food_delivery/features/chat/presentation/pages/admin_chat_list.dart';
 import '../catalogue_pages/admin_catalog_page.dart';
 import '../promo_pages/admin_promo_item_page.dart';
-
+import '../settings/admin_settings_page.dart';
 
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({super.key});
@@ -17,10 +17,11 @@ class _AdminHomePageState extends State<AdminHomePage> {
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
-          CartAdmin(),
+    CartAdmin(),
     const AdminChatList(),
     const AdminCatalogScreen(),
     const AdminPromoItemPage(),
+    const AdminSettingsPage(), // Added settings page
   ];
 
   void _onItemTapped(int index) {
@@ -50,6 +51,11 @@ class _AdminHomePageState extends State<AdminHomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.local_offer_outlined),
             label: 'Promo',
+          ),
+          BottomNavigationBarItem(
+            // Added settings item
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
         currentIndex: _selectedIndex,

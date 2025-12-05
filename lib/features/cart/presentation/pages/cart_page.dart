@@ -5,8 +5,9 @@ import 'package:food_delivery/features/auth/presentation/cubits/auth_cubit.dart'
 import 'package:food_delivery/features/cart/presentation/cubits/cart_cubit.dart';
 import 'package:food_delivery/features/profile/presentation/cubits/profile_cubit.dart';
 import '../../../payments/payment_dialog.dart';
+import '../../../payments/payment_settings.dart';
+import '../../../settings/data/firebase_settings_repo.dart';
 import '../../domain/entities/cart_item.dart';
-
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -17,7 +18,10 @@ class CartPage extends StatefulWidget {
 
 class _CartPageState extends State<CartPage> {
   bool _processingOrder = false;
-  String _selectedPaymentMethod = 'Cash on Delivery';
+  String _selectedPaymentMethod = '';
+  final FirebaseSettingsRepo _settingsRepo = FirebaseSettingsRepo();
+  PaymentSettings? _paymentSettings;
+  bool _loadingPaymentSettings = false;
 
   @override
   void initState() {
@@ -27,7 +31,52 @@ class _CartPageState extends State<CartPage> {
       if (user != null) {
         context.read<CartCubit>().loadCart(user.uid);
       }
+      _loadPaymentSettings();
     });
+  }
+
+  Future<void> _loadPaymentSettings() async {
+    setState(() {
+      _loadingPaymentSettings = true;
+    });
+    try {
+      _paymentSettings = await _settingsRepo.getPaymentSettings();
+      // Set initial selected payment method
+      if (_paymentSettings != null) {
+        if (_paymentSettings!.allowCashOnDelivery) {
+          _selectedPaymentMethod = 'Cash on Delivery';
+        } else if (_paymentSettings!.allowPaystack) {
+          _selectedPaymentMethod = 'Paystack';
+        }
+      }
+    } catch (e) {
+      _paymentSettings = PaymentSettings(
+        allowCashOnDelivery: true,
+        allowPaystack: true,
+        lastUpdated: DateTime.now(),
+      );
+      _selectedPaymentMethod = 'Cash on Delivery';
+    } finally {
+      setState(() {
+        _loadingPaymentSettings = false;
+      });
+    }
+  }
+
+  bool _isPaymentMethodAllowed(String method) {
+    if (_paymentSettings == null) return true;
+
+    if (method == 'Cash on Delivery') {
+      return _paymentSettings!.allowCashOnDelivery;
+    } else if (method == 'Paystack') {
+      return _paymentSettings!.allowPaystack;
+    }
+    return false;
+  }
+
+  bool _paymentMethodsAvailable() {
+    if (_paymentSettings == null) return true;
+    return _paymentSettings!.allowCashOnDelivery || _paymentSettings!.allowPaystack;
   }
 
   @override
@@ -447,12 +496,60 @@ class _CartPageState extends State<CartPage> {
   }
 
   Widget _buildPaymentMethodSelector(StateSetter dialogSetState) {
+    if (_loadingPaymentSettings) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_paymentSettings == null) {
+      return const Text('Unable to load payment options');
+    }
+
+    final List<Map<String, dynamic>> availableMethods = [];
+
+    if (_paymentSettings!.allowCashOnDelivery) {
+      availableMethods.add({
+        'value': 'Cash on Delivery',
+        'title': 'Cash on Delivery',
+        'subtitle': 'Pay when your order arrives',
+      });
+    }
+
+    if (_paymentSettings!.allowPaystack) {
+      availableMethods.add({
+        'value': 'Paystack',
+        'title': 'Paystack',
+        'subtitle': 'Pay securely with card, bank, etc.',
+      });
+    }
+
+    if (availableMethods.isEmpty) {
+      return const Column(
+        children: [
+          Icon(Icons.error_outline, color: Colors.orange, size: 40),
+          SizedBox(height: 10),
+          Text(
+            'No payment methods available. Please contact support.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.orange),
+          ),
+        ],
+      );
+    }
+
+    if (availableMethods.length == 1 && _selectedPaymentMethod != availableMethods[0]['value']) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        dialogSetState(() {
+          _selectedPaymentMethod = availableMethods[0]['value'] as String;
+        });
+      });
+    }
+
     return Column(
-      children: [
-        ListTile(
+      children: availableMethods.map((method) {
+        return ListTile(
           contentPadding: EdgeInsets.zero,
           leading: Radio<String>(
-            value: 'Cash on Delivery',
+            value: method['value'] as String,
             groupValue: _selectedPaymentMethod,
             onChanged: (value) {
               dialogSetState(() {
@@ -460,24 +557,10 @@ class _CartPageState extends State<CartPage> {
               });
             },
           ),
-          title: const Text('Cash on Delivery'),
-          subtitle: const Text('Pay when your order arrives'),
-        ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Radio<String>(
-            value: 'Paystack',
-            groupValue: _selectedPaymentMethod,
-            onChanged: (value) {
-              dialogSetState(() {
-                _selectedPaymentMethod = value!;
-              });
-            },
-          ),
-          title: const Text('Paystack'),
-          subtitle: const Text('Pay securely with card, bank, etc.'),
-        ),
-      ],
+          title: Text(method['title']),
+          subtitle: Text(method['subtitle']),
+        );
+      }).toList(),
     );
   }
 
@@ -492,7 +575,7 @@ class _CartPageState extends State<CartPage> {
         child: Text('Cancel', style: TextStyle(color: Colors.grey[700])),
       ),
       ElevatedButton(
-        onPressed: _processingOrder
+        onPressed: _processingOrder || !_paymentMethodsAvailable() || _selectedPaymentMethod.isEmpty
             ? null
             : () => _confirmOrder(context, dialogSetState, userId),
         style: ElevatedButton.styleFrom(
@@ -501,7 +584,9 @@ class _CartPageState extends State<CartPage> {
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-          child: _processingOrder
+          child: !_paymentMethodsAvailable() && _selectedPaymentMethod.isEmpty
+              ? const Text('No Payment Methods', style: TextStyle(color: Colors.white))
+              : _processingOrder
               ? const SizedBox(
             width: 24,
             height: 24,
@@ -525,6 +610,17 @@ class _CartPageState extends State<CartPage> {
       StateSetter dialogSetState,
       String userId,
       ) async {
+    if (!_isPaymentMethodAllowed(_selectedPaymentMethod)) {
+      dialogSetState(() => _processingOrder = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selected payment method is not available'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     dialogSetState(() => _processingOrder = true);
 
     try {
@@ -535,14 +631,13 @@ class _CartPageState extends State<CartPage> {
         final user = context.read<AuthCubit>().currentUser;
 
         if (_selectedPaymentMethod == 'Paystack') {
-          // Show Paystack payment dialog
           final result = await showDialog<Map<String, dynamic>>(
             context: context,
             builder: (context) => PaystackPaymentDialog(
               amount: _calculateTotal(state.items),
               userEmail: user?.email ?? 'customer@example.com',
               onPaymentComplete: (result) {
-                Navigator.pop(context, result); // Close dialog with result
+                Navigator.pop(context, result);
               },
             ),
           );
@@ -555,7 +650,7 @@ class _CartPageState extends State<CartPage> {
               paymentReference: result?['paymentReference'],
             );
 
-            Navigator.pop(context); // Close the checkout dialog
+            Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Payment successful! Order confirmed.'),
@@ -563,12 +658,10 @@ class _CartPageState extends State<CartPage> {
               ),
             );
           } else {
-            // Payment was cancelled or failed
             dialogSetState(() => _processingOrder = false);
-            return; // Don't close the checkout dialog
+            return;
           }
         } else {
-          // Cash on delivery
           await context.read<CartCubit>().confirmPurchase(
             userId,
             address,

@@ -15,6 +15,11 @@ class AdminChatScreen extends StatelessWidget {
     final TextEditingController _controller = TextEditingController();
     final theme = Theme.of(context);
 
+    // Mark messages as read when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ChatCubit>().markMessagesAsRead(userId);
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: Column(
@@ -27,6 +32,29 @@ class AdminChatScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.inversePrimary,
               ),
+            ),
+            StreamBuilder<List<Map<String, dynamic>>>(
+              stream: context.read<ChatCubit>().getAllChats(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  final chat = snapshot.data!.firstWhere(
+                        (chat) => chat['userId'] == userId,
+                    orElse: () => {'unread': 0},
+                  );
+                  final unreadCount = chat['unread'] ?? 0;
+                  if (unreadCount > 0) {
+                    return Text(
+                      '$unreadCount unread message${unreadCount > 1 ? 's' : ''}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.red,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    );
+                  }
+                }
+                return const SizedBox.shrink();
+              },
             ),
           ],
         ),
@@ -58,6 +86,7 @@ class AdminChatScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final message = messages[index];
                     final isAdminMessage = message['sender'] == 'admin';
+                    final bool isRead = message['read'] ?? false;
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -69,7 +98,7 @@ class AdminChatScreen extends StatelessWidget {
                           Container(
                             constraints: BoxConstraints(
                               maxWidth:
-                                  MediaQuery.of(context).size.width * 0.75,
+                              MediaQuery.of(context).size.width * 0.75,
                             ),
                             padding: const EdgeInsets.symmetric(
                               vertical: 12,
@@ -78,7 +107,9 @@ class AdminChatScreen extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: isAdminMessage
                                   ? theme.colorScheme.primary
-                                  : Colors.red,
+                                  : (!isRead && !isAdminMessage
+                                  ? Colors.red[100] // Highlight unread user messages
+                                  : Colors.grey[200]),
                               borderRadius: BorderRadius.only(
                                 topLeft: const Radius.circular(20),
                                 topRight: const Radius.circular(20),
@@ -89,6 +120,9 @@ class AdminChatScreen extends StatelessWidget {
                                     ? const Radius.circular(4)
                                     : const Radius.circular(20),
                               ),
+                              border: !isRead && !isAdminMessage
+                                  ? Border.all(color: Colors.red[300]!, width: 1)
+                                  : null,
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
@@ -107,20 +141,52 @@ class AdminChatScreen extends StatelessWidget {
                                   style: TextStyle(
                                     color: isAdminMessage
                                         ? theme.colorScheme.onPrimary
-                                        : theme.colorScheme.onSecondary,
+                                        : Colors.black87,
                                     fontSize: 15,
                                   ),
                                 ),
                                 const SizedBox(height: 6),
-                                Text(
-                                  _formatTimestamp(message['timestamp']),
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: (isAdminMessage
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _formatTimestamp(message['timestamp']),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: (isAdminMessage
                                             ? theme.colorScheme.onPrimary
-                                            : theme.colorScheme.onSecondary)
-                                        .withOpacity(0.7),
-                                  ),
+                                            : Colors.grey[600])
+                                            ?.withOpacity(0.7),
+                                      ),
+                                    ),
+                                    if (isAdminMessage && !isRead)
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 4),
+                                        child: Icon(
+                                          Icons.check,
+                                          size: 10,
+                                          color: theme.colorScheme.onPrimary,
+                                        ),
+                                      ),
+                                    if (isAdminMessage && isRead)
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 4),
+                                        child: Icon(
+                                          Icons.done_all,
+                                          size: 10,
+                                          color: Colors.green[200],
+                                        ),
+                                      ),
+                                    if (!isAdminMessage && !isRead)
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 4),
+                                        child: Icon(
+                                          Icons.circle,
+                                          size: 8,
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -167,7 +233,7 @@ class AdminChatScreen extends StatelessWidget {
                       ),
                       suffixIcon: IconButton(
                         icon:
-                            Icon(Icons.send, color: Colors.red),
+                        Icon(Icons.send, color: Colors.red),
                         onPressed: () {
                           if (_controller.text.isNotEmpty) {
                             context
