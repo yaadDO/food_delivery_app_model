@@ -74,6 +74,7 @@ dependencies:
   meta: ^1.16.0
   flutter_paystack_plus: ^2.3.0
   paystack: ^0.0.2
+  android_notification_icons: ^0.0.1
 
 dev_dependencies:
   flutter_test:
