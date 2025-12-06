@@ -62,6 +62,9 @@ class FirebaseAuthRepo implements AuthRepo {
           .doc(user.uid)
           .set(user.toJson());
 
+      // Update FCM token after successful registration
+      await updateUserFCMToken();
+
       return user;
     } catch (e) {
       throw Exception('Registration Failed: $e');
@@ -109,11 +112,18 @@ class FirebaseAuthRepo implements AuthRepo {
             .doc(newUser.uid)
             .set(newUser.toJson());
 
+        // Update FCM token after successful Google sign-in
+        await updateUserFCMToken();
+
         return newUser;
       }
 
       // Return existing user
       final userData = userDoc.data() as Map<String, dynamic>;
+
+      // Update FCM token after successful Google sign-in
+      await updateUserFCMToken();
+
       return AppUser(
         uid: userCredential.user!.uid,
         email: userCredential.user!.email!,
@@ -155,7 +165,45 @@ class FirebaseAuthRepo implements AuthRepo {
     if (token != null) {
       await FirebaseFirestore.instance.collection('users').doc(userId).update({
         'fcmToken': token,
+        'fcmTokenUpdated': FieldValue.serverTimestamp(),
       });
+    }
+  }
+
+  Future<void> updateUserFCMToken() async {
+    try {
+      final user = firebaseAuth.currentUser;
+      if (user == null) return;
+
+      // Request permission for notifications
+      final messaging = FirebaseMessaging.instance;
+      await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      // Get FCM token
+      final token = await messaging.getToken();
+      if (token != null) {
+        await firebaseFirestore.collection('users').doc(user.uid).update({
+          'fcmToken': token,
+          'fcmTokenUpdated': FieldValue.serverTimestamp(),
+        });
+        print('FCM Token updated: $token');
+      }
+
+      // Handle token refresh
+      messaging.onTokenRefresh.listen((newToken) async {
+        await firebaseFirestore.collection('users').doc(user.uid).update({
+          'fcmToken': newToken,
+          'fcmTokenUpdated': FieldValue.serverTimestamp(),
+        });
+        print('FCM Token refreshed: $newToken');
+      });
+
+    } catch (e) {
+      print('Error updating FCM token: $e');
     }
   }
 }

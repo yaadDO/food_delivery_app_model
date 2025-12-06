@@ -5,6 +5,8 @@ import 'package:food_delivery/features/auth/domain/entities/app_user.dart';
 import 'package:food_delivery/features/auth/domain/repository/auth_repo.dart';
 import 'package:food_delivery/features/auth/presentation/cubits/auth_states.dart';
 
+import '../../data/firebase_auth_repo.dart';
+
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepo authRepo;
   AppUser? _currentUser;
@@ -17,6 +19,8 @@ class AuthCubit extends Cubit<AuthState> {
     final AppUser? user = await authRepo.getCurrentUser();
     if (user != null) {
       _currentUser = user;
+      // Store/update FCM token for returning authenticated users
+      await (authRepo as FirebaseAuthRepo).storeFCMToken(user.uid);
       emit(Authenticated(user.isAdmin, user));
     } else {
       emit(Unauthenticated());
@@ -36,8 +40,9 @@ class AuthCubit extends Cubit<AuthState> {
 
       if (user != null) {
         _currentUser = user;
-        // Pass both required parameters
-        emit(Authenticated(user.isAdmin, user)); // Add user as second parameter
+        // Store FCM token
+        await (authRepo as FirebaseAuthRepo).storeFCMToken(user.uid);
+        emit(Authenticated(user.isAdmin, user));
       } else {
         emit(Unauthenticated());
       }
@@ -45,7 +50,6 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthError(e.toString()));
     }
   }
-
   //register
   Future<void> register(String name, String email, String pw) async {
     try {
@@ -54,6 +58,8 @@ class AuthCubit extends Cubit<AuthState> {
 
       if (user != null) {
         _currentUser = user;
+        // Store FCM token
+        await (authRepo as FirebaseAuthRepo).storeFCMToken(user.uid);
         emit(Authenticated(false, user));
       } else {
         emit(Unauthenticated());
@@ -70,6 +76,8 @@ class AuthCubit extends Cubit<AuthState> {
 
       if (user != null) {
         _currentUser = user;
+        // Store FCM token
+        await (authRepo as FirebaseAuthRepo).storeFCMToken(user.uid);
         emit(Authenticated(user.isAdmin, user));
       } else {
         emit(Unauthenticated());

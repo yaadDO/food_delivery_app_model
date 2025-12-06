@@ -14,10 +14,13 @@ module.exports = {
     'indent': ['error', 2],
     'quotes': ['error', 'single', { allowTemplateLiterals: true }],
     'max-len': ['error', { code: 120 }],
-    'comma-dangle': ['error', 'never'],
+    'comma-dangle': 'off',
     'require-jsdoc': 'off',
     'object-curly-spacing': ['error', 'always'],
-    'padded-blocks': 'off'
+    'padded-blocks': 'off',
+    'linebreak-style': 'off',
+    'eol-last': 'off',
+    'no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }]
   },
   overrides: [
     {

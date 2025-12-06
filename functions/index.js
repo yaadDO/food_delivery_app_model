@@ -1,57 +1,11 @@
-const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { onDocumentCreated } = require('firebase-functions/v2/firestore');
 const { onRequest } = require('firebase-functions/v2/https');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getMessaging } = require('firebase-admin/messaging');
-const Stripe = require('stripe');
 const logger = require('firebase-functions/logger');
-const functions = require('firebase-functions');
 
-// Initialize Firebase
 initializeApp();
-
-// Stripe Payment Intent Function
-exports.createPaymentIntent = onCall(async (data, context) => {
-  try {
-    // Get Stripe secret from Firebase config - FIXED KEY NAME
-    const stripeSecret = functions.config().stripe?.secret_key;
-    if (!stripeSecret) {
-      throw new Error('Stripe secret key not configured');
-    }
-
-    const stripe = new Stripe(stripeSecret);
-
-    // Validate user authentication
-    if (!context.auth) {
-      throw new HttpsError(
-        'unauthenticated',
-        'Authentication required'
-      );
-    }
-
-    // Validate input
-    if (!data.amount || !data.currency) {
-      throw new HttpsError(
-        'invalid-argument',
-        'Missing required fields'
-      );
-    }
-
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: data.amount,
-      currency: data.currency,
-      automatic_payment_methods: { enabled: true }
-    });
-
-    return { clientSecret: paymentIntent.client_secret };
-
-  } catch (error) {
-    logger.error('Stripe Error:', error);
-    throw new HttpsError('internal', error.message);
-  }
-});
 
 exports.sendChatNotification = onDocumentCreated(
   'chats/{userId}/messages/{messageId}',
@@ -66,69 +20,74 @@ exports.sendChatNotification = onDocumentCreated(
       }
 
       const isAdminMessage = message.sender === 'admin';
-      const notificationPromises = [];
       const firestore = getFirestore();
 
       if (isAdminMessage) {
+        // Admin sent message → notify USER
         const userDoc = await firestore.collection('users').doc(userId).get();
         const userToken = userDoc.data()?.fcmToken;
 
         if (userToken) {
-          notificationPromises.push(sendNotification(
+          await sendNotification(
             userToken,
             'New Support Message',
             message.text,
-            { type: 'chat', userId }
-          ));
+            { type: 'chat', userId },
+          );
         }
       } else {
+        // User sent message → notify ADMINS (excluding the sender)
         const adminsSnapshot = await firestore.collection('users')
           .where('isAdmin', '==', true)
           .get();
 
+        // Filter out current user if they're also an admin
+        const notificationPromises = [];
         adminsSnapshot.forEach((adminDoc) => {
           const adminToken = adminDoc.data().fcmToken;
-          if (adminToken) {
+          // Only send if adminToken exists AND it's not the same user
+          if (adminToken && adminDoc.id !== userId) {
             notificationPromises.push(sendNotification(
               adminToken,
               'New Customer Message',
               message.text,
-              { type: 'chat', userId }
+              { type: 'chat', userId },
             ));
           }
         });
+
+        await Promise.all(notificationPromises);
       }
 
-      await Promise.all(notificationPromises);
       return null;
-
     } catch (error) {
       logger.error('Full error:', error);
       return null;
     }
-  }
-);
+  });
 
 async function sendNotification(token, title, body, data) {
   const messaging = getMessaging();
   const firestore = getFirestore();
+
   const payload = {
     notification: { title, body },
     data: {
       ...data,
-      click_action: 'FLUTTER_NOTIFICATION_CLICK'
+      click_action: 'FLUTTER_NOTIFICATION_CLICK',
     },
-    token
+    token,
   };
 
   try {
+    // Log notification in Firestore
     await firestore.collection('notifications').add({
       userId: data.userId,
       title: title,
       body: body,
       type: 'chat',
       chatUserId: data.userId,
-      timestamp: FieldValue.serverTimestamp()
+      timestamp: FieldValue.serverTimestamp(),
     });
 
     const response = await messaging.send(payload);
@@ -140,7 +99,6 @@ async function sendNotification(token, title, body, data) {
   }
 }
 
-// Use the onRequest imported at the top
 exports.healthCheck = onRequest((req, res) => {
   res.status(200).send('OK');
 });
