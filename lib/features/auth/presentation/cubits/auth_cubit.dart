@@ -1,5 +1,5 @@
-//This class is part of a Flutter Bloc architecture used to manage user authentication state in a Flutter application
-//It extends the Cubit class, which emits different AuthState instances based on the authentication process's progress or outcome.
+// This class is part of a Flutter Bloc architecture used to manage user authentication state in a Flutter application
+// It extends the Cubit class, which emits different AuthState instances based on the authentication process's progress or outcome.
 import 'package:bloc/bloc.dart';
 import 'package:food_delivery/features/auth/domain/entities/app_user.dart';
 import 'package:food_delivery/features/auth/domain/repository/auth_repo.dart';
@@ -50,6 +50,7 @@ class AuthCubit extends Cubit<AuthState> {
       emit(AuthError(e.toString()));
     }
   }
+
   //register
   Future<void> register(String name, String email, String pw) async {
     try {
@@ -89,7 +90,12 @@ class AuthCubit extends Cubit<AuthState> {
 
 //logout
   Future<void> logout() async {
-    authRepo.logout();
-    emit(Unauthenticated());
+    try {
+      await authRepo.logout();
+      _currentUser = null; // Clear current user
+      emit(Unauthenticated());
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
   }
 }

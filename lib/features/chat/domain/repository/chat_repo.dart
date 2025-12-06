@@ -5,4 +5,5 @@ abstract class ChatRepo {
   Stream<List<Map<String, dynamic>>> getMessages(String userId);
   Stream<List<Map<String, dynamic>>> getAllChats();
   Future<void> markMessagesAsRead(String userId);
+  Stream<int> getUnreadCount(String userId);
 }

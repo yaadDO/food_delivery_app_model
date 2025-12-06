@@ -21,6 +21,15 @@ class _NotificationsViewState extends State<NotificationsView> {
     });
   }
 
+  @override
+  void dispose() {
+    // Reset notifications when leaving the page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NotificationsCubit>().reset();
+    });
+    super.dispose();
+  }
+
   void _loadNotifications() {
     final userId = context.read<AuthCubit>().currentUser?.uid ?? '';
     context.read<NotificationsCubit>().loadNotifications(userId);

@@ -105,11 +105,16 @@ class _MyAppState extends State<MyApp> {
                 ScaffoldMessenger.of(context)
                     .showSnackBar(SnackBar(content: Text(state.message)));
               } else if (state is Authenticated) {
-                final currentUserId =
-                    context.read<AuthCubit>().currentUser!.uid;
+                final currentUserId = context.read<AuthCubit>().currentUser!.uid;
                 context.read<ProfileCubit>().fetchUserProfile(currentUserId);
+
+                // Reset notifications when a new user authenticates
+                context.read<NotificationsCubit>().reset();
+
                 navigatorKey.currentState?.popUntil((route) => route.isFirst);
               } else if (state is Unauthenticated) {
+                // Reset notifications when user logs out
+                context.read<NotificationsCubit>().reset();
                 navigatorKey.currentState?.popUntil((route) => route.isFirst);
               }
             },

@@ -8,23 +8,13 @@ class ChatCubit extends Cubit<ChatState> {
   ChatCubit(this.chatRepo) : super(ChatInitial());
 
   Future<void> sendMessage(String userId, String text, bool isAdmin) async {
-    emit(ChatLoading());
-    try {
-      await chatRepo.sendMessage(userId, text, isAdmin);
-      emit(ChatSuccess());
-    } catch (e) {
-      emit(ChatError(e.toString()));
-    }
+    // No state emission here - just forward to repo
+    return chatRepo.sendMessage(userId, text, isAdmin);
   }
 
   Future<void> markMessagesAsRead(String userId) async {
-    emit(ChatLoading());
-    try {
-      await chatRepo.markMessagesAsRead(userId);
-      emit(ChatSuccess());
-    } catch (e) {
-      emit(ChatError(e.toString()));
-    }
+    // No state emission here
+    return chatRepo.markMessagesAsRead(userId);
   }
 
   Stream<List<Map<String, dynamic>>> getMessages(String userId) {
@@ -33,5 +23,9 @@ class ChatCubit extends Cubit<ChatState> {
 
   Stream<List<Map<String, dynamic>>> getAllChats() {
     return chatRepo.getAllChats();
+  }
+
+  Stream<int> getUnreadCount(String userId) {
+    return chatRepo.getUnreadCount(userId);
   }
 }

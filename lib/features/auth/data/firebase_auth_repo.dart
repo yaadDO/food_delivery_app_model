@@ -137,7 +137,37 @@ class FirebaseAuthRepo implements AuthRepo {
 
   @override
   Future<void> logout() async {
-    await firebaseAuth.signOut();
+    try {
+      // Get current user before logging out
+      final currentUser = firebaseAuth.currentUser;
+      if (currentUser != null) {
+        // Clean up FCM token
+        await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).update({
+          'fcmToken': FieldValue.delete(),
+          'fcmTokenUpdated': FieldValue.delete(),
+        });
+      }
+
+      // Sign out from Firebase
+      await firebaseAuth.signOut();
+
+      // Sign out from Google if signed in with Google
+      await _googleSignIn.signOut();
+    } catch (e) {
+      print('Error during logout: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> cleanupFCMToken(String userId) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'fcmToken': FieldValue.delete(),
+        'fcmTokenUpdated': FieldValue.delete(),
+      });
+    } catch (e) {
+      print('Error cleaning up FCM token: $e');
+    }
   }
 
   @override

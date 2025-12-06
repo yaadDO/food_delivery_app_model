@@ -19,13 +19,15 @@ class FirebaseChatRepo implements ChatRepo {
     // Reference to the chat document
     final chatDocRef = _firestore.collection('chats').doc(userId);
 
-    // Update lastActive and lastMessage for the chat
-    await chatDocRef.set({
-      'lastActive': FieldValue.serverTimestamp(),
-      'lastMessage': text,
-    }, SetOptions(merge: true));
-
     if (isAdmin) {
+      // Admin sending a message
+      // Update lastActive and lastMessage for the chat
+      await chatDocRef.set({
+        'lastActive': FieldValue.serverTimestamp(),
+        'lastMessage': text,
+        'unread': 0, // Initialize unread to 0 for admin messages
+      }, SetOptions(merge: true));
+
       // Mark all user's unread messages as read
       final unreadMessages = await _firestore.collection('chats').doc(userId)
           .collection('messages')
@@ -38,17 +40,36 @@ class FirebaseChatRepo implements ChatRepo {
         batch.update(doc.reference, {'read': true});
       }
       await batch.commit();
-
-      // Decrease unread count by the number of messages marked read
-      await chatDocRef.update({
-        'unread': FieldValue.increment(-unreadMessages.size),
-      });
     } else {
-      // User sent a message: increment unread count
-      await chatDocRef.update({
-        'unread': FieldValue.increment(1),
-      });
+      // User sending a message: increment unread count
+      // First, get the current unread count
+      final chatDoc = await chatDocRef.get();
+      final currentUnread = chatDoc.exists && chatDoc.data() != null
+          ? (chatDoc.data()!['unread'] ?? 0)
+          : 0;
+
+      // Update lastActive, lastMessage, and unread count
+      await chatDocRef.set({
+        'lastActive': FieldValue.serverTimestamp(),
+        'lastMessage': text,
+        'unread': currentUnread + 1, // Explicitly set to current + 1
+      }, SetOptions(merge: true));
     }
+  }
+
+  @override
+  Stream<int> getUnreadCount(String userId) {
+    return _firestore.collection('chats').doc(userId)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.exists) {
+        final data = snapshot.data();
+        if (data != null && data.containsKey('unread')) {
+          return data['unread'] ?? 0;
+        }
+      }
+      return 0;
+    });
   }
 
   @override
@@ -70,9 +91,9 @@ class FirebaseChatRepo implements ChatRepo {
       await batch.commit();
 
       // Reset unread count to 0
-      await chatDocRef.update({
+      await chatDocRef.set({
         'unread': 0,
-      });
+      }, SetOptions(merge: true));
     }
   }
 
