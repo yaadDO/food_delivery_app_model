@@ -271,19 +271,19 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          // Icon for admin (person)
+          // Icon for admin (customer/support agent on LEFT)
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: theme.colorScheme.primary.withOpacity(0.1),
+              color: Colors.deepOrangeAccent.withOpacity(0.1),
             ),
-            child: Icon(
-              Icons.person,
+            child: const Icon(
+              Icons.support_agent,
               size: 16,
-              color: theme.colorScheme.primary,
+              color: Colors.deepOrangeAccent,
             ),
           ),
           const SizedBox(width: 8),
@@ -293,12 +293,12 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
             ),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.9),
+              color: Colors.deepOrangeAccent.withOpacity(0.9),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(4),
+                bottomLeft: Radius.circular(4),
+                bottomRight: Radius.circular(16),
               ),
               boxShadow: [
                 BoxShadow(
@@ -309,12 +309,12 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
               ],
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   _pendingMessageText!,
-                  style: TextStyle(
-                    color: theme.colorScheme.onPrimary,
+                  style: const TextStyle(
+                    color: Colors.white,
                     fontSize: 15,
                   ),
                 ),
@@ -326,7 +326,7 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                       _formatTimestamp(Timestamp.now()),
                       style: TextStyle(
                         fontSize: 10,
-                        color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                        color: Colors.white.withOpacity(0.8),
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -335,7 +335,7 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                       height: 12,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: theme.colorScheme.onPrimary,
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -356,10 +356,10 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: isAdminMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isAdminMessage ? MainAxisAlignment.start : MainAxisAlignment.end,
         children: [
-          if (!isAdminMessage) ...[
-            // Icon for user (support agent)
+          if (isAdminMessage) ...[
+            // Icon for admin messages (customer/support agent on LEFT)
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -381,19 +381,19 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isAdminMessage
-                  ? theme.colorScheme.primary
+                  ? Colors.deepOrangeAccent
                   : (!isRead && !isAdminMessage
                   ? Colors.red[100]
-                  : Colors.deepOrangeAccent),
+                  : Colors.blue[600]),
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
                 bottomLeft: isAdminMessage
-                    ? const Radius.circular(16)
-                    : const Radius.circular(4),
-                bottomRight: isAdminMessage
                     ? const Radius.circular(4)
                     : const Radius.circular(16),
+                bottomRight: isAdminMessage
+                    ? const Radius.circular(16)
+                    : const Radius.circular(4),
               ),
               border: !isRead && !isAdminMessage
                   ? Border.all(color: Colors.red[300]!, width: 1)
@@ -408,69 +408,41 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
             ),
             child: Column(
               crossAxisAlignment: isAdminMessage
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
+                  ? CrossAxisAlignment.start
+                  : CrossAxisAlignment.end,
               children: [
                 Text(
                   message['text'],
-                  style: TextStyle(
-                    color: isAdminMessage
-                        ? theme.colorScheme.onPrimary
-                        : Colors.white,
+                  style: const TextStyle(
+                    color: Colors.white,
                     fontSize: 15,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _formatTimestamp(message['timestamp']),
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: (isAdminMessage
-                            ? theme.colorScheme.onPrimary
-                            : Colors.white)
-                            ?.withOpacity(0.8),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    if (isAdminMessage && !isRead)
-                      Icon(
-                        Icons.check,
-                        size: 10,
-                        color: theme.colorScheme.onPrimary,
-                      ),
-                    if (isAdminMessage && isRead)
-                      Icon(
-                        Icons.done_all,
-                        size: 10,
-                        color: Colors.green[200],
-                      ),
-                    if (!isAdminMessage && !isRead)
-                      Icon(
-                        Icons.circle,
-                        size: 8,
-                        color: Colors.red,
-                      ),
-                  ],
+                // REMOVED ALL CHECK MARK ICONS - ONLY TIMESTAMP REMAINS
+                Text(
+                  _formatTimestamp(message['timestamp']),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.white.withOpacity(0.8),
+                  ),
                 ),
               ],
             ),
           ),
-          if (isAdminMessage) ...[
+          if (!isAdminMessage) ...[
             const SizedBox(width: 8),
-            // Icon for admin (person)
+            // Icon for user messages (person icon on RIGHT)
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: theme.colorScheme.primary.withOpacity(0.1),
+                color: Colors.blue[600]!.withOpacity(0.1),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.person,
                 size: 16,
-                color: theme.colorScheme.primary,
+                color: Colors.blue,
               ),
             ),
           ],
@@ -517,7 +489,7 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
           Container(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: _isSending ? Colors.grey : Colors.red,
+              color: _isSending ? Colors.grey : Colors.deepOrangeAccent,
             ),
             child: IconButton(
               icon: _isSending

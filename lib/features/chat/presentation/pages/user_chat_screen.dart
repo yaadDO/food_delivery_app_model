@@ -23,8 +23,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
       "💬 Customer Support Chat\n\n"
       "• Send messages to our support team\n"
       "• We'll respond as soon as possible\n"
-      "• Describe your issue clearly for faster resolution\n"
-      "• You can attach screenshots by describing them\n\n"
+      "• Describe your issue clearly for faster resolution\n\n"
       "Our team is here to help you!";
 
   @override
@@ -269,8 +268,14 @@ class _UserChatScreenState extends State<UserChatScreen> {
                             Expanded(
                               child: TextField(
                                 controller: _controller,
+                                style: const TextStyle(
+                                  color: Colors.black, // Input text color set to black
+                                ),
                                 decoration: const InputDecoration(
                                   hintText: 'Type your message...',
+                                  hintStyle: TextStyle(
+                                    color: Colors.black54, // Hint text color set to black with opacity
+                                  ),
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(
                                     horizontal: 16,
