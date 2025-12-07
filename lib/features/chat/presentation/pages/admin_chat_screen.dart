@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../cubit/chat_cubit.dart';
 
 class AdminChatScreen extends StatefulWidget {
@@ -40,7 +41,6 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
     return _messageStream!.asyncMap((messages) async {
       // Check if we need to remove pending message
       if (_pendingMessageId != null) {
-        // Look for a message with similar text that was just sent
         final now = DateTime.now();
         for (final message in messages) {
           final timestamp = message['timestamp'] as Timestamp?;
@@ -161,23 +161,108 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        return ListView.builder(
-          reverse: true,
-          padding: const EdgeInsets.all(12),
-          itemCount: messages.length + (_pendingMessageText != null ? 1 : 0),
-          itemBuilder: (context, index) {
-            // Handle pending message
-            if (_pendingMessageText != null && index == 0) {
-              return _buildPendingMessage();
-            }
+        // Group messages by date
+        final Map<String, List<Map<String, dynamic>>> groupedMessages = {};
 
-            // Adjust index for real messages
-            final messageIndex = _pendingMessageText != null ? index - 1 : index;
-            final message = messages[messageIndex];
-            return _buildMessageBubble(message, context);
+        for (var message in messages) {
+          if (message == null) continue;
+
+          // get timestamp from Firestore Timestamp to DateTime
+          final timestamp = message['timestamp'];
+          if (timestamp == null) continue;
+
+          final DateTime messageDate = timestamp.toDate();
+          final String dateKey = DateFormat('yyyy-MM-dd').format(messageDate);
+
+          groupedMessages.putIfAbsent(dateKey, () => []);
+          groupedMessages[dateKey]!.add(message);
+        }
+
+        // Sort date keys OLD → NEW (oldest first)
+        final sortedDates = groupedMessages.keys.toList()
+          ..sort((a, b) => a.compareTo(b)); // ascending sort: oldest first
+
+        // Build UI widgets
+        final List<Widget> messageWidgets = [];
+
+        for (final dateKey in sortedDates) {
+          final dayMessages = groupedMessages[dateKey]!;
+
+          // sort messages in that day by timestamp (oldest first)
+          dayMessages.sort((a, b) {
+            final DateTime aTime = a['timestamp'].toDate();
+            final DateTime bTime = b['timestamp'].toDate();
+            return aTime.compareTo(bTime);
+          });
+
+          // parse date for header display
+          final DateTime headerDate = DateTime.parse(dateKey);
+          messageWidgets.add(_buildDateHeader(headerDate)); // date header ABOVE messages
+
+          // add messages for this day (in sorted order)
+          for (final message in dayMessages) {
+            messageWidgets.add(
+              _buildMessageBubble(message, context),
+            );
+          }
+        }
+
+        // Add pending message at the end if it exists
+        if (_pendingMessageText != null) {
+          messageWidgets.add(_buildPendingMessage());
+        }
+
+        return ListView.builder(
+          reverse: false,
+          padding: const EdgeInsets.all(12),
+          itemCount: messageWidgets.length,
+          itemBuilder: (context, index) {
+            return messageWidgets[index];
           },
         );
       },
+    );
+  }
+
+  // Build WhatsApp-style date header (placed at the TOP of messages for that day)
+  Widget _buildDateHeader(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(date.year, date.month, date.day);
+
+    String dateText;
+
+    if (messageDate == today) {
+      dateText = 'Today';
+    } else if (messageDate == today.subtract(const Duration(days: 1))) {
+      dateText = 'Yesterday';
+    } else if (messageDate.year == now.year) {
+      // Same year, show day and month in uppercase
+      dateText = DateFormat('dd MMM').format(date).toUpperCase(); // "15 JAN"
+    } else {
+      // Different year, show full date with year
+      dateText = DateFormat('dd MMM yyyy').format(date).toUpperCase();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 8),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            dateText,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -188,23 +273,37 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          // Icon for admin (person)
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: theme.colorScheme.primary.withOpacity(0.1),
+            ),
+            child: Icon(
+              Icons.person,
+              size: 16,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 8),
           Container(
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.75,
+              maxWidth: MediaQuery.of(context).size.width * 0.7,
             ),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withOpacity(0.9),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-                bottomLeft: Radius.circular(20),
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
                 bottomRight: Radius.circular(4),
               ),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
-                  blurRadius: 6,
+                  blurRadius: 4,
                   offset: const Offset(0, 2),
                 )
               ],
@@ -219,7 +318,7 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                     fontSize: 15,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -227,7 +326,7 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                       _formatTimestamp(Timestamp.now()),
                       style: TextStyle(
                         fontSize: 10,
-                        color: theme.colorScheme.onPrimary.withOpacity(0.7),
+                        color: theme.colorScheme.onPrimary.withOpacity(0.8),
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -259,26 +358,42 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
       child: Row(
         mainAxisAlignment: isAdminMessage ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
+          if (!isAdminMessage) ...[
+            // Icon for user (support agent)
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.deepOrangeAccent.withOpacity(0.1),
+              ),
+              child: const Icon(
+                Icons.support_agent,
+                size: 16,
+                color: Colors.deepOrangeAccent,
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           Container(
             constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.75,
+              maxWidth: MediaQuery.of(context).size.width * 0.7,
             ),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isAdminMessage
                   ? theme.colorScheme.primary
                   : (!isRead && !isAdminMessage
                   ? Colors.red[100]
-                  : Colors.grey[200]),
+                  : Colors.deepOrangeAccent),
               borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(20),
-                topRight: const Radius.circular(20),
+                topLeft: const Radius.circular(16),
+                topRight: const Radius.circular(16),
                 bottomLeft: isAdminMessage
-                    ? const Radius.circular(20)
+                    ? const Radius.circular(16)
                     : const Radius.circular(4),
                 bottomRight: isAdminMessage
                     ? const Radius.circular(4)
-                    : const Radius.circular(20),
+                    : const Radius.circular(16),
               ),
               border: !isRead && !isAdminMessage
                   ? Border.all(color: Colors.red[300]!, width: 1)
@@ -286,7 +401,7 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
-                  blurRadius: 6,
+                  blurRadius: 4,
                   offset: const Offset(0, 2),
                 )
               ],
@@ -301,11 +416,11 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                   style: TextStyle(
                     color: isAdminMessage
                         ? theme.colorScheme.onPrimary
-                        : Colors.black87,
+                        : Colors.white,
                     fontSize: 15,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -315,42 +430,50 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                         fontSize: 10,
                         color: (isAdminMessage
                             ? theme.colorScheme.onPrimary
-                            : Colors.grey[600])
-                            ?.withOpacity(0.7),
+                            : Colors.white)
+                            ?.withOpacity(0.8),
                       ),
                     ),
+                    const SizedBox(width: 4),
                     if (isAdminMessage && !isRead)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: Icon(
-                          Icons.check,
-                          size: 10,
-                          color: theme.colorScheme.onPrimary,
-                        ),
+                      Icon(
+                        Icons.check,
+                        size: 10,
+                        color: theme.colorScheme.onPrimary,
                       ),
                     if (isAdminMessage && isRead)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: Icon(
-                          Icons.done_all,
-                          size: 10,
-                          color: Colors.green[200],
-                        ),
+                      Icon(
+                        Icons.done_all,
+                        size: 10,
+                        color: Colors.green[200],
                       ),
                     if (!isAdminMessage && !isRead)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: Icon(
-                          Icons.circle,
-                          size: 8,
-                          color: Colors.red,
-                        ),
+                      Icon(
+                        Icons.circle,
+                        size: 8,
+                        color: Colors.red,
                       ),
                   ],
                 ),
               ],
             ),
           ),
+          if (isAdminMessage) ...[
+            const SizedBox(width: 8),
+            // Icon for admin (person)
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.primary.withOpacity(0.1),
+              ),
+              child: Icon(
+                Icons.person,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -460,8 +583,14 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
     }
   }
 
-  String _formatTimestamp(Timestamp timestamp) {
-    final date = timestamp.toDate();
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp == null) return 'Just now';
+
+    try {
+      final date = timestamp.toDate();
+      return DateFormat('HH:mm').format(date);
+    } catch (e) {
+      return 'Just now';
+    }
   }
 }
