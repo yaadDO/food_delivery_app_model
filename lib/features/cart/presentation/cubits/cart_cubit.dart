@@ -6,17 +6,22 @@ part 'cart_states.dart';
 
 class CartCubit extends Cubit<CartState> {
   final CartRepo cartRepo;
+  List<CartItem> _currentItems = [];
+
   CartCubit(this.cartRepo) : super(CartInitial());
 
   Future<void> loadCart(String userId) async {
     emit(CartLoading());
     try {
       final items = await cartRepo.getCartItems(userId);
+      _currentItems = items; // Cache items
       emit(CartLoaded(items));
     } catch (e) {
       emit(CartError(e.toString()));
     }
   }
+
+  List<CartItem> get currentItems => _currentItems;
 
   Future<void> processPayment(
       String userId,
@@ -62,23 +67,59 @@ class CartCubit extends Cubit<CartState> {
   }
 
   Future<void> removeFromCart(String userId, String itemId) async {
+    if (state is! CartLoaded) return;
+
+    final currentState = state as CartLoaded;
+    final updatedItems = currentState.items
+        .where((item) => item.itemId != itemId)
+        .toList();
+
+    // Update UI immediately
+    _currentItems = updatedItems;
+    emit(CartLoaded(updatedItems));
+
+    // Sync with Firestore in background
     try {
       await cartRepo.removeFromCart(userId, itemId);
-      await loadCart(userId);
     } catch (e) {
       emit(CartError(e.toString()));
+      await loadCart(userId);
     }
   }
 
+
   Future<void> updateItemQuantity(
-      String userId, String itemId, int newQuantity) async {
+      String userId,
+      String itemId,
+      int newQuantity
+      ) async {
+    if (state is! CartLoaded) return;
+
+    final currentState = state as CartLoaded;
+    final items = currentState.items;
+    final index = items.indexWhere((item) => item.itemId == itemId);
+
+    if (index == -1) return;
+
+    // Create updated list with the new quantity
+    final updatedItems = List<CartItem>.from(items);
+    updatedItems[index] = updatedItems[index].copyWith(quantity: newQuantity);
+
+    // Update UI immediately (optimistic update)
+    _currentItems = updatedItems;
+    emit(CartLoaded(updatedItems));
+
+    // Then sync with Firestore in background
     try {
       await cartRepo.updateQuantity(userId, itemId, newQuantity);
-      await loadCart(userId);
     } catch (e) {
-      emit(CartError(e.toString()));
+      // Revert on error
+      emit(CartError('Failed to update quantity: $e'));
+      // Optionally reload cart to get correct state
+      await loadCart(userId);
     }
   }
+
 
   Future<void> clearCart(String userId) async {
     try {
@@ -94,6 +135,8 @@ class CartCubit extends Cubit<CartState> {
       String address,
       String paymentMethod, {
         String? paymentReference,
+        String? deliveryOption = 'delivery',
+        double deliveryFee = 0.0,
       }) async {
     try {
       final items = await cartRepo.getCartItems(userId);
@@ -107,6 +150,8 @@ class CartCubit extends Cubit<CartState> {
         address,
         paymentMethod,
         paymentReference: paymentReference,
+        deliveryOption: deliveryOption,
+        deliveryFee: deliveryFee,
       );
 
       await clearCart(userId);

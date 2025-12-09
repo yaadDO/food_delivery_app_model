@@ -124,7 +124,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                         return MyButton(
                           onTap: state is AuthLoading ? null : login,
                           text: 'Login',
-                          isLoading: state is AuthLoading, // Added
+                          isLoading: state is AuthLoading,
                         );
                       },
                     ),

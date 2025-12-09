@@ -76,6 +76,7 @@ class CartAdmin extends StatelessWidget {
                       children: [
                         Text('Total: \$${data['total'].toStringAsFixed(2)}'),
                         Text('Payment: ${data['paymentMethod']}'),
+                        Text('Type: ${data['deliveryOption'] == 'pickup' ? 'Pickup' : 'Delivery'}'),
                         if (paymentReference != null && paymentReference.isNotEmpty)
                           Text('Ref: $paymentReference',
                               style: TextStyle(fontSize: 12, color: Colors.grey)),

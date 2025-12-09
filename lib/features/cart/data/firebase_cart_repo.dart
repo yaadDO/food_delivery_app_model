@@ -111,9 +111,14 @@ class FirebaseCartRepo implements CartRepo {
       String address,
       String paymentMethod, {
         String? paymentReference,
+        String? deliveryOption = 'delivery', // Add delivery option
+        double deliveryFee = 0.0, // Add delivery fee
       }) async {
     try {
       final orderDoc = _firestore.collection('orders').doc();
+      final double subtotal = items.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
+      final double total = subtotal + deliveryFee;
+
       await orderDoc.set({
         'userId': userId,
         'items': items.map((item) => {
@@ -123,12 +128,15 @@ class FirebaseCartRepo implements CartRepo {
           'quantity': item.quantity,
           'imagePath': item.imagePath,
         }).toList(),
-        'total': items.fold(0.0, (sum, item) => sum + (item.price * item.quantity)),
+        'subtotal': subtotal,
+        'deliveryFee': deliveryFee,
+        'deliveryOption': deliveryOption,
+        'total': total,
         'timestamp': FieldValue.serverTimestamp(),
         'address': address,
         'status': 'Pending',
         'paymentMethod': paymentMethod,
-        'paymentReference': paymentReference, // Store Paystack reference
+        'paymentReference': paymentReference,
       });
     } catch (e) {
       throw Exception('Error confirming purchase: $e');

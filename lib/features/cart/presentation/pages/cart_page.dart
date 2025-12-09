@@ -19,6 +19,7 @@ class CartPage extends StatefulWidget {
 class _CartPageState extends State<CartPage> {
   bool _processingOrder = false;
   String _selectedPaymentMethod = '';
+  String _deliveryOption = 'delivery'; // 'delivery' or 'pickup'
   final FirebaseSettingsRepo _settingsRepo = FirebaseSettingsRepo();
   PaymentSettings? _paymentSettings;
   bool _loadingPaymentSettings = false;
@@ -53,6 +54,9 @@ class _CartPageState extends State<CartPage> {
       _paymentSettings = PaymentSettings(
         allowCashOnDelivery: true,
         allowPaystack: true,
+        deliveryFeeEnabled: false,
+        deliveryFeeAmount: 5.0,
+        allowPickup: true,
         lastUpdated: DateTime.now(),
       );
       _selectedPaymentMethod = 'Cash on Delivery';
@@ -77,6 +81,14 @@ class _CartPageState extends State<CartPage> {
   bool _paymentMethodsAvailable() {
     if (_paymentSettings == null) return true;
     return _paymentSettings!.allowCashOnDelivery || _paymentSettings!.allowPaystack;
+  }
+
+  double _calculateDeliveryFee() {
+    if (_deliveryOption == 'pickup') return 0.0;
+    if (_paymentSettings?.deliveryFeeEnabled == true) {
+      return _paymentSettings!.deliveryFeeAmount;
+    }
+    return 0.0;
   }
 
   @override
@@ -141,7 +153,8 @@ class _CartPageState extends State<CartPage> {
   }
 
   Widget _buildCartItem(CartItem item) {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -165,23 +178,23 @@ class _CartPageState extends State<CartPage> {
             child: FutureBuilder<String>(
               future: _getImageUrl(item.imagePath),
               builder: (context, snapshot) {
-                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                  return Image.network(
-                    snapshot.data!,
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                  );
-                }
+                // Cache the image URL
                 return Container(
                   width: 100,
                   height: 100,
                   color: Colors.grey[200],
-                  child: Center(
+                  child: snapshot.hasData && snapshot.data!.isNotEmpty
+                      ? Image.network(
+                    snapshot.data!,
+                    fit: BoxFit.cover,
+                    cacheHeight: 100,
+                    cacheWidth: 100,
+                  )
+                      : Center(
                     child: Icon(
-                        Icons.fastfood,
-                        size: 40,
-                        color: Colors.grey[400]
+                      Icons.fastfood,
+                      size: 40,
+                      color: Colors.grey[400],
                     ),
                   ),
                 );
@@ -196,7 +209,11 @@ class _CartPageState extends State<CartPage> {
                 children: [
                   Text(
                     item.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -213,35 +230,8 @@ class _CartPageState extends State<CartPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove, size: 18),
-                              onPressed: () => _updateQuantity(item, -1),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
-                              child: Text(
-                                item.quantity.toString(),
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.add, size: 18),
-                              onPressed: () => _updateQuantity(item, 1),
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                      ),
+                      // Optimized quantity controls
+                      _buildQuantityControls(item),
                       IconButton(
                         icon: Icon(Icons.delete_outline, color: Colors.red[400]),
                         onPressed: () => _removeItem(item),
@@ -257,10 +247,50 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
+  Widget _buildQuantityControls(CartItem item) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.green,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.remove, size: 18),
+            onPressed: () => _updateQuantity(item, -1),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          // Use ValueListenableBuilder for smooth quantity updates
+          ValueListenableBuilder<int>(
+            valueListenable: ValueNotifier<int>(item.quantity),
+            builder: (context, quantity, child) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  quantity.toString(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.add, size: 18),
+            onPressed: () => _updateQuantity(item, 1),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBottomBar() {
     return BlocBuilder<CartCubit, CartState>(
       builder: (context, state) {
-        final total = state is CartLoaded ? _calculateTotal(state.items) : 0.0;
+        final subtotal = state is CartLoaded ? _calculateSubtotal(state.items) : 0.0;
+        final deliveryFee = _calculateDeliveryFee();
+        final total = subtotal + deliveryFee;
         final itemCount = state is CartLoaded ? state.items.length : 0;
 
         return Container(
@@ -283,21 +313,6 @@ class _CartPageState extends State<CartPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Total:', style: TextStyle(fontSize: 16, color: Colors.black), ),
-                  Text(
-                    '\$${total.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -332,6 +347,7 @@ class _CartPageState extends State<CartPage> {
     if (user != null) {
       final newQuantity = item.quantity + change;
       if (newQuantity > 0) {
+        // This will trigger the optimistic update
         context.read<CartCubit>().updateItemQuantity(user.uid, item.itemId, newQuantity);
       } else {
         _removeItem(item);
@@ -386,110 +402,268 @@ class _CartPageState extends State<CartPage> {
       String address,
       StateSetter dialogSetState,
       ) {
+    final subtotal = _calculateSubtotal(items);
+    final deliveryFee = _calculateDeliveryFee();
+    final total = subtotal + deliveryFee;
+
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.location_on_outlined, color: Theme.of(context).primaryColor),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          // Delivery/Pickup Option
+          if (_paymentSettings?.allowPickup == true)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Choose Option',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[700],
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
                   children: [
-                    Text(
-                      'Delivery Address',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
+                    Expanded(
+                      child: _buildDeliveryOptionButton(
+                        icon: Icons.delivery_dining,
+                        label: 'Delivery',
+                        selected: _deliveryOption == 'delivery',
+                        onTap: () {
+                          dialogSetState(() {
+                            _deliveryOption = 'delivery';
+                          });
+                        },
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      address,
-                      style: const TextStyle(fontSize: 16),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildDeliveryOptionButton(
+                        icon: Icons.storefront,
+                        label: 'Pickup',
+                        selected: _deliveryOption == 'pickup',
+                        onTap: () {
+                          dialogSetState(() {
+                            _deliveryOption = 'pickup';
+                          });
+                        },
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.payment_outlined, color: Theme.of(context).primaryColor),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
+                const SizedBox(height: 16),
+              ],
+            ),
+
+          // Address Section (only show for delivery)
+          if (_deliveryOption == 'delivery')
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Payment Method',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
+                    Icon(Icons.location_on_outlined, color: Theme.of(context).primaryColor, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Delivery Address',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            address,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    _buildPaymentMethodSelector(dialogSetState),
                   ],
                 ),
+                const SizedBox(height: 16),
+              ],
+            ),
+
+          // Payment Method Section
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Payment Method',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[700],
+                  fontSize: 16,
+                ),
               ),
+              const SizedBox(height: 10),
+              _buildPaymentMethodSelector(dialogSetState),
             ],
           ),
+
           const SizedBox(height: 20),
+
+          // Order Summary
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.grey[50],
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Subtotal', style: TextStyle(color: Colors.grey)),
-                    Text('Items', style: TextStyle(color: Colors.grey)),
-                  ],
+                Text(
+                  'Order Summary',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[700],
+                    fontSize: 16,
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '\$${_calculateTotal(items).toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      '${items.length} item${items.length > 1 ? 's' : ''}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
+                _buildOrderSummaryRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}'),
+                if (deliveryFee > 0)
+                  _buildOrderSummaryRow('Delivery Fee', '\$${deliveryFee.toStringAsFixed(2)}'),
+                if (_deliveryOption == 'pickup')
+                  _buildOrderSummaryRow('Pickup', 'Free'),
+                const SizedBox(height: 12),
                 const Divider(),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                     Text(
-                      '\$${_calculateTotal(items).toStringAsFixed(2)}',
+                      'Total',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    Text(
+                      '\$${total.toStringAsFixed(2)}',
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: Colors.green,
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  '${items.length} item${items.length > 1 ? 's' : ''}',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                ),
               ],
             ),
           ),
+
+          // Info Message
+          if (_deliveryOption == 'delivery' && deliveryFee > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 12.0),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue[600], size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Delivery fee will be added to your total',
+                      style: TextStyle(color: Colors.blue[600], fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          if (_deliveryOption == 'pickup')
+            Padding(
+              padding: const EdgeInsets.only(top: 12.0),
+              child: Row(
+                children: [
+                  Icon(Icons.storefront, color: Colors.green[600], size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'You\'ll pickup your order at our store location',
+                      style: TextStyle(color: Colors.green[600], fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeliveryOptionButton({
+    required IconData icon,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(
+          color: selected
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+              : Theme.of(context).colorScheme.surfaceVariant,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline,
+            width: selected ? 2 : 1.5,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: selected
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+              size: 28,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: selected ? FontWeight.bold : FontWeight.w600,
+                color: selected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderSummaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: Colors.grey[600])),
+          Text(value, style: TextStyle(fontWeight: FontWeight.w500, color: Colors.grey[600])),
         ],
       ),
     );
@@ -511,6 +685,7 @@ class _CartPageState extends State<CartPage> {
         'value': 'Cash on Delivery',
         'title': 'Cash on Delivery',
         'subtitle': 'Pay when your order arrives',
+        'icon': Icons.money,
       });
     }
 
@@ -519,14 +694,15 @@ class _CartPageState extends State<CartPage> {
         'value': 'Paystack',
         'title': 'Paystack',
         'subtitle': 'Pay securely with card, bank, etc.',
+        'icon': Icons.credit_card,
       });
     }
 
     if (availableMethods.isEmpty) {
-      return const Column(
+      return Column(
         children: [
           Icon(Icons.error_outline, color: Colors.orange, size: 40),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
             'No payment methods available. Please contact support.',
             textAlign: TextAlign.center,
@@ -546,19 +722,88 @@ class _CartPageState extends State<CartPage> {
 
     return Column(
       children: availableMethods.map((method) {
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Radio<String>(
-            value: method['value'] as String,
-            groupValue: _selectedPaymentMethod,
-            onChanged: (value) {
+        final isSelected = _selectedPaymentMethod == method['value'];
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+              : Theme.of(context).colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.outlineVariant ?? Colors.grey.shade300,
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          elevation: isSelected ? 2 : 0,
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+                    : Theme.of(context).colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                method['icon'] as IconData,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            title: Text(
+              method['title'] as String,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 16,
+              ),
+            ),
+            subtitle: Text(
+              method['subtitle'] as String,
+              style: TextStyle(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            trailing: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.outline,
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? Center(
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              )
+                  : null,
+            ),
+            onTap: () {
               dialogSetState(() {
-                _selectedPaymentMethod = value!;
+                _selectedPaymentMethod = method['value'] as String;
               });
             },
           ),
-          title: Text(method['title']),
-          subtitle: Text(method['subtitle']),
         );
       }).toList(),
     );
@@ -601,7 +846,7 @@ class _CartPageState extends State<CartPage> {
     ];
   }
 
-  double _calculateTotal(List<CartItem> items) {
+  double _calculateSubtotal(List<CartItem> items) {
     return items.fold(0.0, (sum, item) => sum + (item.price * item.quantity));
   }
 
@@ -627,14 +872,20 @@ class _CartPageState extends State<CartPage> {
       final state = context.read<CartCubit>().state;
       if (state is CartLoaded) {
         final profile = await context.read<ProfileCubit>().getUserProfile(userId);
-        final address = profile?.address ?? 'No address set';
+        final address = _deliveryOption == 'delivery'
+            ? profile?.address ?? 'No address set'
+            : 'Store Pickup';
         final user = context.read<AuthCubit>().currentUser;
+
+        final subtotal = _calculateSubtotal(state.items);
+        final deliveryFee = _calculateDeliveryFee();
+        final total = subtotal + deliveryFee;
 
         if (_selectedPaymentMethod == 'Paystack') {
           final result = await showDialog<Map<String, dynamic>>(
             context: context,
             builder: (context) => PaystackPaymentDialog(
-              amount: _calculateTotal(state.items),
+              amount: total, // Use total including delivery fee
               userEmail: user?.email ?? 'customer@example.com',
               onPaymentComplete: (result) {
                 Navigator.pop(context, result);
@@ -643,18 +894,22 @@ class _CartPageState extends State<CartPage> {
           );
 
           if (result?['success'] == true) {
+            // We need to update CartCubit to accept delivery options
             await context.read<CartCubit>().confirmPurchase(
               userId,
               address,
               _selectedPaymentMethod,
               paymentReference: result?['paymentReference'],
+              deliveryOption: _deliveryOption,
+              deliveryFee: deliveryFee,
             );
 
-            Navigator.pop(context);
+            Navigator.pop(context); // Close checkout dialog
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Payment successful! Order confirmed.'),
+              SnackBar(
+                content: Text('Payment successful! Order confirmed. ${_deliveryOption == 'pickup' ? 'Ready for pickup!' : 'Your food is on the way!'}'),
                 backgroundColor: Colors.green,
+                duration: const Duration(seconds: 3),
               ),
             );
           } else {
@@ -666,13 +921,16 @@ class _CartPageState extends State<CartPage> {
             userId,
             address,
             _selectedPaymentMethod,
+            deliveryOption: _deliveryOption,
+            deliveryFee: deliveryFee,
           );
 
-          Navigator.pop(context);
+          Navigator.pop(context); // Close checkout dialog
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Order confirmed! Your food is on the way'),
+            SnackBar(
+              content: Text('Order confirmed! ${_deliveryOption == 'pickup' ? 'Ready for pickup!' : 'Your food is on the way!'}'),
               backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
             ),
           );
         }

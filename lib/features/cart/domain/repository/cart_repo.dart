@@ -11,7 +11,8 @@ abstract class CartRepo {
       List<CartItem> items,
       String address,
       String paymentMethod, {
-        String? paymentReference, // Changed from paymentIntentId
+        String? paymentReference,
+        String? deliveryOption,
+        double deliveryFee,
       });
 }
-

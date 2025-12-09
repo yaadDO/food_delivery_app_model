@@ -18,6 +18,7 @@ class CatalogCubit extends Cubit<CatalogState> {
       final categories = await catalogRepo.getCategories();
       final allItems = await catalogRepo.getAllCatalogItems();
 
+      // Make sure items are properly assigned to categories
       final updatedCategories = categories.map((category) {
         final categoryItems = allItems.where(
                 (item) => item.categoryId == category.id

@@ -470,10 +470,12 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
             child: TextField(
               controller: _controller,
               enabled: !_isSending,
+              style: TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 hintText: 'Type a message...',
+                hintStyle: TextStyle(color: Colors.grey),
                 filled: true,
-                fillColor: theme.colorScheme.tertiary,
+                fillColor: theme.colorScheme.onSurfaceVariant,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide.none,

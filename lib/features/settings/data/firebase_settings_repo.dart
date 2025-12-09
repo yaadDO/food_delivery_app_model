@@ -20,6 +20,9 @@ class FirebaseSettingsRepo implements SettingsRepo {
         final defaultSettings = PaymentSettings(
           allowCashOnDelivery: true,
           allowPaystack: true,
+          deliveryFeeEnabled: false,  // Added this
+          deliveryFeeAmount: 5.0,     // Added this - default delivery fee
+          allowPickup: true,          // Added this
           lastUpdated: DateTime.now(),
         );
         // Create the document with default settings

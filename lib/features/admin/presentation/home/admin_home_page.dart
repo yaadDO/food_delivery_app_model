@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:food_delivery/features/admin/presentation/catalogue_pages/admin_catelog_items_page.dart';
 import 'package:food_delivery/features/cart/presentation/pages/cart_admin.dart';
 import 'package:food_delivery/features/chat/presentation/pages/admin_chat_list.dart';
+import 'package:food_delivery/features/catalogue/presentation/cubits/catalog_cubit.dart';
 import '../catalogue_pages/admin_catalog_page.dart';
 import '../promo_pages/admin_promo_item_page.dart';
 import '../settings/admin_settings_page.dart';
@@ -19,9 +21,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
   final List<Widget> _pages = [
     CartAdmin(),
     const AdminChatList(),
-    const AdminCatalogScreen(),
+    _CatalogPageWithRefresh(),
     const AdminPromoItemPage(),
-    const AdminSettingsPage(), // Added settings page
+    const AdminSettingsPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -53,7 +55,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
             label: 'Promo',
           ),
           BottomNavigationBarItem(
-            // Added settings item
             icon: Icon(Icons.settings),
             label: 'Settings',
           ),
@@ -64,6 +65,50 @@ class _AdminHomePageState extends State<AdminHomePage> {
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
+    );
+  }
+}
+
+// New widget that forces refresh when catalog tab is selected
+class _CatalogPageWithRefresh extends StatefulWidget {
+  @override
+  State<_CatalogPageWithRefresh> createState() => _CatalogPageWithRefreshState();
+}
+
+class _CatalogPageWithRefreshState extends State<_CatalogPageWithRefresh> {
+  bool _hasLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load catalog data immediately when this tab is created
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCatalog();
+    });
+  }
+
+  Future<void> _loadCatalog() async {
+    if (_hasLoaded) return;
+
+    final catalogCubit = BlocProvider.of<CatalogCubit>(context);
+    await catalogCubit.loadCategories();
+    setState(() {
+      _hasLoaded = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Force reload catalog when this widget is built
+    if (!_hasLoaded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadCatalog();
+      });
+    }
+
+    return BlocProvider.value(
+      value: BlocProvider.of<CatalogCubit>(context),
+      child: const AdminCatalogScreen(),
     );
   }
 }

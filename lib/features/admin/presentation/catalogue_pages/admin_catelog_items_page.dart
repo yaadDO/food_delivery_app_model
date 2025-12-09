@@ -17,6 +17,28 @@ class AdminCategoryItemsPage extends StatefulWidget {
 }
 
 class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
+  bool _isInitialLoad = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Force load items when page opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCategoryItems();
+    });
+  }
+
+  Future<void> _loadCategoryItems() async {
+    if (!_isInitialLoad) return;
+
+    setState(() {
+      _isInitialLoad = false;
+    });
+
+    // Force the cubit to load fresh data
+    await BlocProvider.of<CatalogCubit>(context).loadCategories();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,26 +52,72 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
               );
               return Text(category.name);
             }
-            return const Text('Category Items');
+            return const Text('Loading...');
           },
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              BlocProvider.of<CatalogCubit>(context).loadCategories();
+            },
+          ),
+        ],
       ),
       body: BlocBuilder<CatalogCubit, CatalogState>(
         builder: (context, state) {
+          // Show loading initially
+          if (_isInitialLoad) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
           if (state is CatalogLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (state is CatalogError) {
-            return Center(child: Text(state.message));
-          }
-          if (state is CatalogDataLoaded) {
-            final category = state.categories.firstWhere(
-                  (c) => c.id == widget.categoryId,
-              orElse: () => Category(id: '', name: '', imagePath: ''),
-            );
 
-            if (category.items.isEmpty) {
-              return const Center(child: Text('No items available'));
+          if (state is CatalogError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error: ${state.message}'),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      BlocProvider.of<CatalogCubit>(context).loadCategories();
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (state is CatalogDataLoaded) {
+            // Get items from allItems that belong to this category
+            final categoryItems = state.allItems.where(
+                  (item) => item.categoryId == widget.categoryId,
+            ).toList();
+
+            if (categoryItems.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No items available',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Tap the + button to add your first item',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              );
             }
 
             return GridView.builder(
@@ -60,9 +128,9 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
                 mainAxisSpacing: 8,
                 childAspectRatio: 0.8,
               ),
-              itemCount: category.items.length,
+              itemCount: categoryItems.length,
               itemBuilder: (context, index) {
-                final item = category.items[index];
+                final item = categoryItems[index];
                 return AdminItemCard(
                   item: item,
                   onTap: () => _navigateToItemDetail(context, item),
@@ -70,7 +138,8 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
               },
             );
           }
-          return Container();
+
+          return const Center(child: CircularProgressIndicator());
         },
       ),
       floatingActionButton: FloatingActionButton(
@@ -97,11 +166,9 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
         ),
       );
     } else {
-      // Handle error state - show message or reload data
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Category data not loaded')),
       );
-      // Optionally reload categories
       BlocProvider.of<CatalogCubit>(context).loadCategories();
     }
   }

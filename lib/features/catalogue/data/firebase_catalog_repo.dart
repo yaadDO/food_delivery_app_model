@@ -21,6 +21,7 @@ class FirebaseCatalogRepo implements CatalogRepo {
         final data = doc.data() as Map<String, dynamic>? ?? {};
         final imagePath = data['imagePath'] as String? ?? '';
 
+        // IMPORTANT: Filter items by categoryId
         final categoryItems = allItems.where(
                 (item) => item.categoryId == doc.id
         ).toList();
@@ -29,10 +30,11 @@ class FirebaseCatalogRepo implements CatalogRepo {
           id: doc.id,
           name: data['name'] as String? ?? 'Unnamed Category',
           imagePath: imagePath,
-          items: categoryItems,
+          items: categoryItems, // This should be populated
         );
       }).toList();
     } catch (e) {
+      print('Error in getCategories: $e');
       throw Exception('Error fetching categories: $e');
     }
   }

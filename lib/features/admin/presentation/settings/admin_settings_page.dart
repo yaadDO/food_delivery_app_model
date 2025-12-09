@@ -36,10 +36,13 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
           backgroundColor: Colors.red,
         ),
       );
-      // Use default settings on error
+      // Use default settings on error with all required parameters
       _paymentSettings = PaymentSettings(
         allowCashOnDelivery: true,
         allowPaystack: true,
+        deliveryFeeEnabled: false,  // Added
+        deliveryFeeAmount: 5.0,     // Added
+        allowPickup: true,          // Added
         lastUpdated: DateTime.now(),
       );
     } finally {
@@ -224,6 +227,64 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                 });
               },
             ),
+            const Divider(),
+            _buildPaymentOption(
+              title: 'Allow Pickup Option',
+              subtitle: 'Allow customers to choose pickup instead of delivery',
+              value: _paymentSettings.allowPickup,
+              onChanged: (value) {
+                setState(() {
+                  _paymentSettings = _paymentSettings.copyWith(
+                    allowPickup: value,
+                  );
+                });
+              },
+            ),
+            const Divider(),
+            SwitchListTile(
+              title: const Text(
+                'Delivery Fee',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: _paymentSettings.deliveryFeeEnabled
+                  ? Text('Delivery fee: \$${_paymentSettings.deliveryFeeAmount.toStringAsFixed(2)}')
+                  : const Text('No delivery fee'),
+              value: _paymentSettings.deliveryFeeEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _paymentSettings = _paymentSettings.copyWith(
+                    deliveryFeeEnabled: value,
+                  );
+                });
+              },
+              secondary: Icon(
+                Icons.delivery_dining,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+            if (_paymentSettings.deliveryFeeEnabled)
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 8.0),
+                child: TextFormField(
+                  initialValue: _paymentSettings.deliveryFeeAmount.toStringAsFixed(2),
+                  decoration: const InputDecoration(
+                    labelText: 'Delivery Fee Amount',
+                    prefixText: '\$',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (value) {
+                    final amount = double.tryParse(value) ?? 0.0;
+                    if (amount >= 0) {
+                      setState(() {
+                        _paymentSettings = _paymentSettings.copyWith(
+                          deliveryFeeAmount: amount,
+                        );
+                      });
+                    }
+                  },
+                ),
+              ),
             const SizedBox(height: 10),
             Text(
               'Note: At least one payment method must be enabled',
