@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // Add this import
+import 'package:firebase_storage/firebase_storage.dart';
 
 import '../../../promo/domain/entities/promo_item.dart';
 
@@ -41,11 +41,9 @@ class HomePromoItemCard extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // MAIN CONTENT COLUMN
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // IMAGE SECTION
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                   child: AspectRatio(
@@ -80,7 +78,6 @@ class HomePromoItemCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // TEXT CONTENT BELOW IMAGE
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
@@ -100,11 +97,9 @@ class HomePromoItemCard extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // PRICE SECTION
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Show original price with strikethrough if discounted
                               if (hasDiscount)
                                 Text(
                                   '\$${item.price.toStringAsFixed(2)}',
@@ -115,7 +110,6 @@ class HomePromoItemCard extends StatelessWidget {
                                     decoration: TextDecoration.lineThrough,
                                   ),
                                 ),
-                              // Show discounted price or regular price
                               Text(
                                 '\$${discountedPrice.toStringAsFixed(2)}',
                                 style: GoogleFonts.poppins(
@@ -146,7 +140,6 @@ class HomePromoItemCard extends StatelessWidget {
               ],
             ),
 
-            // SALE ELEMENTS ON TOP OF IMAGE
             Positioned(
               top: 12,
               right: 12,

@@ -23,7 +23,6 @@ class _NotificationsViewState extends State<NotificationsView> {
 
   @override
   void dispose() {
-    // Reset notifications when leaving the page
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<NotificationsCubit>().reset();
     });

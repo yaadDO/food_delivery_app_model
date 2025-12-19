@@ -1,5 +1,3 @@
-//The AppUser class represents a user in the Flutter app, providing a structured way to handle user data such as uid, email, and name
-
 class AppUser {
   final String uid;
   final String email;
@@ -13,7 +11,6 @@ class AppUser {
     this.isAdmin = false,
   });
 
-  // Update toJson
   Map<String, dynamic> toJson() => {
     'uid': uid,
     'email': email,
@@ -21,7 +18,6 @@ class AppUser {
     'isAdmin': isAdmin,
   };
 
-  // Update fromJson
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
     uid: json['uid'],
     email: json['email'],

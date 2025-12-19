@@ -21,7 +21,6 @@ class FirebaseCatalogRepo implements CatalogRepo {
         final data = doc.data() as Map<String, dynamic>? ?? {};
         final imagePath = data['imagePath'] as String? ?? '';
 
-        // IMPORTANT: Filter items by categoryId
         final categoryItems = allItems.where(
                 (item) => item.categoryId == doc.id
         ).toList();
@@ -30,7 +29,7 @@ class FirebaseCatalogRepo implements CatalogRepo {
           id: doc.id,
           name: data['name'] as String? ?? 'Unnamed Category',
           imagePath: imagePath,
-          items: categoryItems, // This should be populated
+          items: categoryItems,
         );
       }).toList();
     } catch (e) {
@@ -54,7 +53,6 @@ class FirebaseCatalogRepo implements CatalogRepo {
         'imagePath': imagePath ?? '',
       });
 
-      // Update the category with new ID
       category = category.copyWith(id: docRef.id);
     } catch (e) {
       print('Error adding category: $e');
@@ -67,15 +65,10 @@ class FirebaseCatalogRepo implements CatalogRepo {
   Future<void> updateCategory(Category category, [Uint8List? imageBytes]) async {
     try {
       String? imagePath = category.imagePath;
-
-      // Upload new image if provided
       if (imageBytes != null) {
-        // Delete old image if exists
         if (imagePath != null && imagePath.isNotEmpty) {
           await _storage.ref(imagePath).delete();
         }
-
-        // Upload new image
         imagePath = 'categories/${_uuid.v4()}.jpg';
         await _storage.ref(imagePath).putData(imageBytes);
       }
@@ -92,19 +85,14 @@ class FirebaseCatalogRepo implements CatalogRepo {
   @override
   Future<void> deleteCategory(String categoryId) async {
     try {
-      // Get category data first to delete image
       final doc = await _firestore.collection('categories').doc(categoryId).get();
       final imagePath = doc['imagePath'] as String?;
-
-      // Delete image from storage
       if (imagePath != null && imagePath.isNotEmpty) {
         await _storage.ref(imagePath).delete();
       }
 
-      // Delete category document
       await _firestore.collection('categories').doc(categoryId).delete();
 
-      // Delete all items in the category
       final itemsSnapshot = await _firestore
           .collection('items')
           .where('categoryId', isEqualTo: categoryId)
@@ -176,27 +164,20 @@ class FirebaseCatalogRepo implements CatalogRepo {
   Future<void> updateItem(CatalogItem item, [Uint8List? imageBytes]) async {
     try {
       String? imagePath = item.imagePath;
-
-      // Upload new image if provided
       if (imageBytes != null) {
-        // Delete old image if exists
         if (imagePath != null && imagePath.isNotEmpty) {
           await _storage.ref(imagePath).delete();
         }
-
-        // Upload new image
         imagePath = 'items/${const Uuid().v4()}.jpg';
         await _storage.ref(imagePath).putData(imageBytes);
       }
-
-      // Update document with new image path
       await _firestore.collection('items').doc(item.id).update({
         'name': item.name,
         'price': item.price,
         'quantity': item.quantity,
         'description': item.description,
         'categoryId': item.categoryId,
-        'imagePath': imagePath, // Update image path
+        'imagePath': imagePath,
       });
     } catch (e) {
       throw Exception('Error updating item: $e');
@@ -204,9 +185,8 @@ class FirebaseCatalogRepo implements CatalogRepo {
   }
 
   @override
-  Future<void> deleteItem(String itemId) async { // Remove categoryId parameter
+  Future<void> deleteItem(String itemId) async {
     try {
-      // Get item first to delete image
       final doc = await _firestore.collection('items').doc(itemId).get();
       if (doc.exists) {
         final imagePath = doc['imagePath'] as String?;

@@ -16,16 +16,15 @@ class FirebaseSettingsRepo implements SettingsRepo {
       if (doc.exists) {
         return PaymentSettings.fromMap(doc.data()!);
       } else {
-        // Return default settings if document doesn't exist
         final defaultSettings = PaymentSettings(
           allowCashOnDelivery: true,
           allowPaystack: true,
-          deliveryFeeEnabled: false,  // Added this
-          deliveryFeeAmount: 5.0,     // Added this - default delivery fee
-          allowPickup: true,          // Added this
+          deliveryFeeEnabled: false,
+          deliveryFeeAmount: 5.0,
+          allowPickup: true,
           lastUpdated: DateTime.now(),
         );
-        // Create the document with default settings
+
         await doc.reference.set(defaultSettings.toMap());
         return defaultSettings;
       }

@@ -1,5 +1,3 @@
-// This class is part of a Flutter Bloc architecture used to manage user authentication state in a Flutter application
-// It extends the Cubit class, which emits different AuthState instances based on the authentication process's progress or outcome.
 import 'package:bloc/bloc.dart';
 import 'package:food_delivery/features/auth/domain/entities/app_user.dart';
 import 'package:food_delivery/features/auth/domain/repository/auth_repo.dart';
@@ -11,15 +9,12 @@ class AuthCubit extends Cubit<AuthState> {
   final AuthRepo authRepo;
   AppUser? _currentUser;
 
-  //initializes the AuthCubit with the initial state AuthInitial, indicating that no authentication process has started yet.
   AuthCubit({required this.authRepo}) : super(AuthInitial());
 
-  //check if user is already authenticated
   void checkAuth() async {
     final AppUser? user = await authRepo.getCurrentUser();
     if (user != null) {
       _currentUser = user;
-      // Store/update FCM token for returning authenticated users
       await (authRepo as FirebaseAuthRepo).storeFCMToken(user.uid);
       emit(Authenticated(user.isAdmin, user));
     } else {
@@ -27,12 +22,8 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-
-  //Get current user
-  //Private
   AppUser? get currentUser => _currentUser;
 
-  //login
   Future<void> login(String email, String pw) async {
     try {
       emit(AuthLoading());
@@ -40,7 +31,7 @@ class AuthCubit extends Cubit<AuthState> {
 
       if (user != null) {
         _currentUser = user;
-        // Store FCM token
+
         await (authRepo as FirebaseAuthRepo).storeFCMToken(user.uid);
         emit(Authenticated(user.isAdmin, user));
       } else {
@@ -51,7 +42,6 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  //register
   Future<void> register(String name, String email, String pw) async {
     try {
       emit(AuthLoading());
@@ -59,7 +49,6 @@ class AuthCubit extends Cubit<AuthState> {
 
       if (user != null) {
         _currentUser = user;
-        // Store FCM token
         await (authRepo as FirebaseAuthRepo).storeFCMToken(user.uid);
         emit(Authenticated(false, user));
       } else {
@@ -77,7 +66,6 @@ class AuthCubit extends Cubit<AuthState> {
 
       if (user != null) {
         _currentUser = user;
-        // Store FCM token
         await (authRepo as FirebaseAuthRepo).storeFCMToken(user.uid);
         emit(Authenticated(user.isAdmin, user));
       } else {
@@ -88,11 +76,10 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-//logout
   Future<void> logout() async {
     try {
       await authRepo.logout();
-      _currentUser = null; // Clear current user
+      _currentUser = null;
       emit(Unauthenticated());
     } catch (e) {
       emit(AuthError(e.toString()));

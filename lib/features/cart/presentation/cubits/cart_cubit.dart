@@ -4,14 +4,12 @@ import 'package:food_delivery/features/cart/domain/repository/cart_repo.dart';
 
 part 'cart_states.dart';
 
-/// Cubit for managing cart state and operations
 class CartCubit extends Cubit<CartState> {
   final CartRepo cartRepo;
   List<CartItem> _currentItems = [];
 
   CartCubit(this.cartRepo) : super(CartInitial());
 
-  /// Loads cart items for the given user
   Future<void> loadCart(String userId) async {
     emit(CartLoading());
     try {
@@ -23,10 +21,8 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
-  /// Returns the current cart items
   List<CartItem> get currentItems => List.unmodifiable(_currentItems);
 
-  /// Adds an item to the cart
   Future<void> addToCart(String userId, CartItem item) async {
     try {
       await cartRepo.addToCart(userId, item);
@@ -36,7 +32,6 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
-  /// Removes an item from the cart with optimistic UI update
   Future<void> removeFromCart(String userId, String itemId) async {
     if (state is! CartLoaded) return;
 
@@ -45,20 +40,18 @@ class CartCubit extends Cubit<CartState> {
         .where((item) => item.itemId != itemId)
         .toList();
 
-    // Optimistic update
     _currentItems = updatedItems;
     emit(CartLoaded(updatedItems));
 
-    // Sync with backend
     try {
       await cartRepo.removeFromCart(userId, itemId);
     } catch (e) {
       emit(CartError('Failed to remove item: ${e.toString()}'));
-      await loadCart(userId); // Revert to actual state
+      await loadCart(userId);
     }
   }
 
-  /// Updates item quantity with optimistic UI update
+
   Future<void> updateItemQuantity(
       String userId,
       String itemId,
@@ -72,24 +65,20 @@ class CartCubit extends Cubit<CartState> {
 
     if (index == -1) return;
 
-    // Create updated list
     final updatedItems = List<CartItem>.from(items);
     updatedItems[index] = updatedItems[index].copyWith(quantity: newQuantity);
 
-    // Optimistic update
     _currentItems = updatedItems;
     emit(CartLoaded(updatedItems));
 
-    // Sync with backend
     try {
       await cartRepo.updateQuantity(userId, itemId, newQuantity);
     } catch (e) {
       emit(CartError('Failed to update quantity: ${e.toString()}'));
-      await loadCart(userId); // Revert to actual state
+      await loadCart(userId);
     }
   }
 
-  /// Clears all items from the cart
   Future<void> clearCart(String userId) async {
     try {
       await cartRepo.clearCart(userId);
@@ -100,7 +89,6 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
-  /// Confirms purchase and creates an order
   Future<void> confirmPurchase(
       String userId,
       String address,
@@ -134,7 +122,7 @@ class CartCubit extends Cubit<CartState> {
       await clearCart(userId);
     } catch (e) {
       emit(CartError('Failed to confirm purchase: ${e.toString()}'));
-      rethrow; // Let the UI handle the error
+      rethrow;
     }
   }
 }

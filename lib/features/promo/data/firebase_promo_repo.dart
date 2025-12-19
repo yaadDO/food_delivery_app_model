@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 import 'package:food_delivery/features/promo/domain/repository/promo_repo.dart';
@@ -16,18 +15,15 @@ class FirebasePromoRepo implements PromoRepo {
     if (imageBytes == null) {
       throw Exception('Image is required');
     }
-
     try {
-      // Generate unique image path
       final imagePath = 'promo_images/${_uuid.v4()}.jpg';
       final storageRef = _storage.ref().child(imagePath);
       await storageRef.putData(imageBytes);
 
-      // Create document with image path
       final docRef = _firestore.collection('promo').doc();
       final newItem = item.copyWith(
         id: docRef.id,
-        imagePath: imagePath, // Use imagePath instead of imageUrl
+        imagePath: imagePath,
       );
 
       await docRef.set(newItem.toJson());
@@ -42,19 +38,13 @@ class FirebasePromoRepo implements PromoRepo {
     try {
       String imagePath = item.imagePath;
 
-      // Upload new image if provided
       if (imageBytes != null) {
-        // Delete old image
         if (imagePath.isNotEmpty) {
           await _storage.ref(imagePath).delete();
         }
-
-        // Upload new image
         imagePath = 'promo_images/${_uuid.v4()}.jpg';
         await _storage.ref(imagePath).putData(imageBytes);
       }
-
-      // Update document with new image path
       final updatedItem = item.copyWith(imagePath: imagePath);
       await _firestore.collection('promo').doc(item.id).update(updatedItem.toJson());
 
@@ -67,7 +57,6 @@ class FirebasePromoRepo implements PromoRepo {
   @override
   Future<void> deleteItem(String itemId) async {
     try {
-      // Get item first to delete image
       final doc = await _firestore.collection('promo').doc(itemId).get();
       if (doc.exists) {
         final imagePath = doc['imagePath'] as String?;
@@ -90,7 +79,7 @@ class FirebasePromoRepo implements PromoRepo {
         return PromoItem(
           id: doc.id,
           name: data['name'] ?? '',
-          imagePath: data['imagePath'] ?? '', // Use imagePath
+          imagePath: data['imagePath'] ?? '',
           price: (data['price'] as num).toDouble(),
           quantity: data['quantity'] as int,
           description: data['description'] ?? '',

@@ -12,7 +12,6 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   NotificationsCubit(this.repo) : super(NotificationsInitial());
 
   void loadNotifications(String userId) {
-    // Cancel any existing subscription before loading new notifications
     _notificationSubscription?.cancel();
     _notificationSubscription = null;
 
@@ -25,20 +24,19 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     try {
       final notificationStream = repo.getNotifications(userId);
 
-      // Listen to the stream and handle state properly
       _notificationSubscription = notificationStream.listen(
             (notifications) {
           emit(NotificationsLoaded(notificationStream));
         },
         onError: (error) {
           emit(NotificationsError(error.toString()));
-          // Reset to initial state after error
+
           Future.delayed(const Duration(seconds: 2), () => emit(NotificationsInitial()));
         },
       );
     } catch (e) {
       emit(NotificationsError(e.toString()));
-      // Reset to initial state after error
+
       Future.delayed(const Duration(seconds: 2), () => emit(NotificationsInitial()));
     }
   }
@@ -49,7 +47,7 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
   }
 
-  // NEW: Reset notifications when user logs out
+
   void reset() {
     _notificationSubscription?.cancel();
     _notificationSubscription = null;

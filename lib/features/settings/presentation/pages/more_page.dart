@@ -139,11 +139,8 @@ class MorePage extends StatelessWidget {
                               ),
                               TextButton(
                                 onPressed: () async {
-                                  // Close dialog
                                   Navigator.of(context).pop();
-                                  // Logout
                                   await authCubit.logout();
-                                  // No need to pop MorePage - the BlocConsumer will handle the navigation
                                 },
                                 child: const Text('Logout'),
                               ),

@@ -23,7 +23,6 @@ class MyTextField extends StatelessWidget {
           borderRadius: BorderRadius.circular(13),
         ),
 
-        //selected border
         focusedBorder: OutlineInputBorder(
           borderSide: BorderSide(color: Theme.of(context).colorScheme.onSurface),
           borderRadius: BorderRadius.circular(13),

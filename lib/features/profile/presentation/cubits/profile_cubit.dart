@@ -1,21 +1,16 @@
-//Handles various user profile operations, including fetching profiles, updating profile information, and toggling follow status
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/profile_user.dart';
 import '../../domain/repository/profile_repo.dart';
 import 'profile_states.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
-  //his field represents the repository for profile-related operations, such as fetching or updating user profiles.
-  final ProfileRepo profileRepo;
-  //This field represents the repository for handling image uploads, with separate methods for web and mobile platforms.
-  //final StorageRepo storageRepo;
+final ProfileRepo profileRepo;
+
 
   ProfileCubit({
     required this.profileRepo,
-   // required this.storageRepo,
   }) : super(ProfileInitial());
 
-  //Fetches a user profile by their uid
   Future<void> fetchUserProfile(String uid) async {
     try {
       emit(ProfileLoading());
@@ -28,13 +23,11 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  //This method fetches a user profile and directly returns a ProfileUser object or null if the user is not found
   Future<ProfileUser?> getUserProfile(String uid) async {
     final user = await profileRepo.fetchUserProfile(uid);
     return user;
   }
 
-  //Updates the user's profile information
   Future<void> updateProfile({
     required String uid,
     required String name,

@@ -1,4 +1,3 @@
-// payment_settings.dart - Updated
 class PaymentSettings {
   final bool allowCashOnDelivery;
   final bool allowPaystack;

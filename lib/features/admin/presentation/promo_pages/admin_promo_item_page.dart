@@ -7,15 +7,6 @@ import '../components/admin_promo_item_card.dart';
 import 'add_promo_item_page.dart';
 import 'edit_promo_item_page.dart' show EditPromoItemPage;
 
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
-import 'package:food_delivery/features/promo/presentation/cubit/promo_cubit.dart';
-
-import '../components/admin_promo_item_card.dart';
-import 'add_promo_item_page.dart';
-import 'edit_promo_item_page.dart';
 
 class AdminPromoItemPage extends StatefulWidget {
   const AdminPromoItemPage({super.key});

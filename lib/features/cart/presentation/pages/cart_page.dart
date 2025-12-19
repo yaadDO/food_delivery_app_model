@@ -292,7 +292,7 @@ class _CartPageState extends State<CartPage> {
             deliveryFee: result.deliveryFee,
           );
 
-          Navigator.pop(context); // Close checkout dialog
+          Navigator.pop(context);
           _showSuccessSnackbar(context, result.deliveryOption);
         }
       } else {
@@ -304,7 +304,7 @@ class _CartPageState extends State<CartPage> {
           deliveryFee: result.deliveryFee,
         );
 
-        Navigator.pop(context); // Close checkout dialog
+        Navigator.pop(context);
         _showSuccessSnackbar(context, result.deliveryOption);
       }
     } catch (e) {

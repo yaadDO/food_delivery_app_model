@@ -87,7 +87,6 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Delivery/Pickup Option
             if (widget.paymentSettings?.allowPickup == true)
               DeliveryOptionSelector(
                 selectedOption: _deliveryOption,
@@ -96,13 +95,11 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                 },
               ),
 
-            // Address Section
             if (_deliveryOption == 'delivery')
               _buildAddressSection(),
 
             const SizedBox(height: 16),
 
-            // Payment Method
             PaymentMethodSelector(
               selectedMethod: _selectedPaymentMethod,
               paymentSettings: widget.paymentSettings,
@@ -113,13 +110,11 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
 
             const SizedBox(height: 20),
 
-            // Order Summary
             OrderSummaryWidget(
               summary: orderSummary,
               deliveryOption: _deliveryOption,
             ),
 
-            // Info Messages
             _buildInfoMessages(),
           ],
         ),

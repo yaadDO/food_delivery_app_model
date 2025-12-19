@@ -75,7 +75,6 @@ class _TabButtonState extends State<TabButton> with TickerProviderStateMixin {
           Stack(
             alignment: Alignment.center,
             children: [
-              // Background pulse effect
               AnimatedBuilder(
                 animation: _colorController,
                 builder: (context, child) {
@@ -89,7 +88,6 @@ class _TabButtonState extends State<TabButton> with TickerProviderStateMixin {
                   );
                 },
               ),
-              // Icon with scaling and gradient
               AnimatedBuilder(
                 animation: _scaleAnimation,
                 builder: (context, child) {
@@ -109,7 +107,6 @@ class _TabButtonState extends State<TabButton> with TickerProviderStateMixin {
             ],
           ),
           const SizedBox(height: 2),
-          // Animated text
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             transitionBuilder: (child, animation) {

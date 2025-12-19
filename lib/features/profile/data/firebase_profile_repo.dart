@@ -1,7 +1,4 @@
-//Code interacts with Firebase Firestore to manage user profiles, including fetching profile data, updating profile information, and handling follow/unfollow actions.
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../domain/entities/profile_user.dart';
 import '../domain/repository/profile_repo.dart';
 
@@ -9,7 +6,6 @@ class FirebaseProfileRepo implements ProfileRepo {
   final FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
 
   @override
-  //Fetches the user profile by retrieving a document from the users collection in Firestore using the user’s unique ID
   Future<ProfileUser?> fetchUserProfile(String uid) async {
     try {
       final userDoc = await firebaseFirestore.collection('users').doc(uid).get();
@@ -30,9 +26,6 @@ class FirebaseProfileRepo implements ProfileRepo {
     }
   }
 
-  //Updates the profile data for a user in the Firestore users collection by:
-  // Locating the document using the user’s unique ID (uid).
-  // Updating the bio and profileImageUrl fields with the values from updatedProfile.
   @override
   Future<void> updateProfile(ProfileUser updatedProfile) async {
     try {
@@ -52,7 +45,6 @@ class FirebaseProfileRepo implements ProfileRepo {
   Future<List<ProfileUser>> fetchUsersByIds(List<String> uids) async {
     if (uids.isEmpty) return [];
     final users = <ProfileUser>[];
-    // Process in chunks of 10 due to Firestore limitations
     for (var i = 0; i < uids.length; i += 10) {
       final chunk = uids.sublist(
         i,

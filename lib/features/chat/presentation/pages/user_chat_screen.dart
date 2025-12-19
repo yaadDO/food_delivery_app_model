@@ -18,7 +18,6 @@ class _UserChatScreenState extends State<UserChatScreen> {
   bool _showHelpMessage = true;
   final ScrollController _scrollController = ScrollController();
 
-  // Prewritten help message for customers
   final String _helpMessage =
       "💬 Customer Support Chat\n\n"
       "• Send messages to our support team\n"
@@ -38,7 +37,6 @@ class _UserChatScreenState extends State<UserChatScreen> {
       }
     });
 
-    // Auto-hide the help message after 5 seconds
     Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
         setState(() {
@@ -54,7 +52,6 @@ class _UserChatScreenState extends State<UserChatScreen> {
       appBar: AppBar(
         title: const Text('Support Chat'),
         actions: [
-          // Help button to show message again
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: () {
@@ -62,7 +59,6 @@ class _UserChatScreenState extends State<UserChatScreen> {
                 _showHelpMessage = true;
               });
 
-              // Auto-hide after 5 seconds
               Future.delayed(const Duration(seconds: 5), () {
                 if (mounted) {
                   setState(() {
@@ -84,52 +80,34 @@ class _UserChatScreenState extends State<UserChatScreen> {
                   stream: context.read<ChatCubit>().getMessages(widget.userId),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-
                     final messages = snapshot.data!;
-
-                    // ---------- Group messages by date ----------
                     final Map<String, List<Map<String, dynamic>>> groupedMessages = {};
-
                     for (var message in messages) {
                       if (message == null) continue;
-
-                      // get timestamp from Firestore Timestamp to DateTime
                       final timestamp = message['timestamp'];
                       if (timestamp == null) continue;
-
                       final DateTime messageDate = timestamp.toDate();
                       final String dateKey = DateFormat('yyyy-MM-dd').format(messageDate);
-
                       groupedMessages.putIfAbsent(dateKey, () => []);
                       groupedMessages[dateKey]!.add(message);
                     }
-
-                    // ---------- Sort date keys OLD → NEW (oldest first) ----------
                     final sortedDates = groupedMessages.keys.toList()
-                      ..sort((a, b) => a.compareTo(b)); // ascending sort: oldest first
-
-                    // ---------- Build UI widgets ----------
+                      ..sort((a, b) => a.compareTo(b));
                     final List<Widget> messageWidgets = [];
-
                     for (final dateKey in sortedDates) {
                       final dayMessages = groupedMessages[dateKey]!;
-
-                      // sort messages in that day by timestamp (oldest first)
                       dayMessages.sort((a, b) {
                         final DateTime aTime = a['timestamp'].toDate();
                         final DateTime bTime = b['timestamp'].toDate();
                         return aTime.compareTo(bTime);
                       });
 
-                      // parse date for header display
                       final DateTime headerDate = DateTime.parse(dateKey);
-                      messageWidgets.add(_buildDateHeader(headerDate)); // date header ABOVE messages
+                      messageWidgets.add(_buildDateHeader(headerDate));
 
-                      // add messages for this day (in sorted order)
                       for (final message in dayMessages) {
                         final isUserMessage = message['sender'] == 'user';
 
-                        // Get message date for timestamp
                         DateTime? messageDate;
                         if (message['timestamp'] != null) {
                           try {
@@ -302,7 +280,7 @@ class _UserChatScreenState extends State<UserChatScreen> {
                             context.read<ChatCubit>().sendMessage(
                                 widget.userId,
                                 _controller.text,
-                                false // isAdmin
+                                false
                             );
                             _controller.clear();
                           }
@@ -315,7 +293,6 @@ class _UserChatScreenState extends State<UserChatScreen> {
             ],
           ),
 
-          // Help message overlay
           if (_showHelpMessage)
             Positioned(
               top: 16,
@@ -328,7 +305,6 @@ class _UserChatScreenState extends State<UserChatScreen> {
     );
   }
 
-  // Build WhatsApp-style date header (placed at the TOP of messages for that day)
   Widget _buildDateHeader(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -341,10 +317,8 @@ class _UserChatScreenState extends State<UserChatScreen> {
     } else if (messageDate == today.subtract(const Duration(days: 1))) {
       dateText = 'Yesterday';
     } else if (messageDate.year == now.year) {
-      // Same year, show day and month in uppercase
-      dateText = DateFormat('dd MMM').format(date).toUpperCase(); // "15 JAN"
+      dateText = DateFormat('dd MMM').format(date).toUpperCase();
     } else {
-      // Different year, show full date with year
       dateText = DateFormat('dd MMM yyyy').format(date).toUpperCase();
     }
 
@@ -370,7 +344,6 @@ class _UserChatScreenState extends State<UserChatScreen> {
     );
   }
 
-  // Format message timestamp like WhatsApp (HH:mm)
   String _formatMessageTime(DateTime date) {
     return DateFormat('HH:mm').format(date);
   }

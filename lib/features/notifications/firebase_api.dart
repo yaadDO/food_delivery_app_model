@@ -2,8 +2,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class FirebaseApi {
@@ -18,7 +16,6 @@ class FirebaseApi {
 
     if (fcmToken != null) {
       print('FCM Token: $fcmToken');
-      // Save token to current user's document in Firestore
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId != null) {
         await _firestore.collection('users').doc(userId).update({
@@ -35,7 +32,6 @@ class FirebaseApi {
       _showNotification(message);
     });
 
-    // Refresh token if needed
     FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId != null) {

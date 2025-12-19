@@ -32,7 +32,6 @@ class PromoCubit extends Cubit<PromoState> {
     }
   }
 
-  // Fixed updateItem method
   Future<void> updateItem(PromoItem item, Uint8List? imageBytes) async {
     try {
       final updatedItem = await promoRepo.updateItem(item, imageBytes);
@@ -47,7 +46,7 @@ class PromoCubit extends Cubit<PromoState> {
     }
   }
 
-  // Add deleteItem method
+
   Future<void> deleteItem(String itemId) async {
     try {
       await promoRepo.deleteItem(itemId);

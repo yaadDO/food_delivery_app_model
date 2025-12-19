@@ -47,7 +47,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
     _audioPlayer.play(AssetSource('sounds/flip.mp3'));
     final oldShowLogin = showLoginPage;
     final isForward =
-    !oldShowLogin; // Determine direction based on current page
+    !oldShowLogin;
 
     setState(() {
       showLoginPage = !oldShowLogin;
@@ -86,7 +86,7 @@ class _AuthPageState extends State<AuthPage> with TickerProviderStateMixin {
           ..rotateY((_isForward ? 1 : -1) * animation.value * pi / 1.5)
           ..translate(
             animation.value * 50 * (_isForward ? 1 : -1),
-            // Modified Y translation
+
             animation.value * 20 * (_isForward ? 1 : -1),
             animation.value * 100,
           );

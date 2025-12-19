@@ -1,12 +1,9 @@
-//This code defines a FirebaseAuthRepo class that implements an AuthRepo interface for handling user authentication
-//provides key authentication operations such as user login, registration, logout, and retrieving the currently logged-in useR
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../domain/entities/app_user.dart';
 import '../domain/repository/auth_repo.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
 
 class FirebaseAuthRepo implements AuthRepo {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
@@ -24,7 +21,6 @@ class FirebaseAuthRepo implements AuthRepo {
           .doc(userCredential.user!.uid)
           .get();
 
-      // Add null checks for document fields
       if (!userDoc.exists) throw Exception('User document not found');
 
       final userData = userDoc.data() as Map<String, dynamic>? ?? {};
@@ -49,7 +45,6 @@ class FirebaseAuthRepo implements AuthRepo {
       UserCredential userCredential = await firebaseAuth
           .createUserWithEmailAndPassword(email: email, password: password);
 
-      // Add isAdmin flag during registration (for testing only)
       AppUser user = AppUser(
         uid: userCredential.user!.uid,
         email: email,
@@ -62,7 +57,6 @@ class FirebaseAuthRepo implements AuthRepo {
           .doc(user.uid)
           .set(user.toJson());
 
-      // Update FCM token after successful registration
       await updateUserFCMToken();
 
       return user;
@@ -74,31 +68,25 @@ class FirebaseAuthRepo implements AuthRepo {
   @override
   Future<AppUser?> signInWithGoogle() async {
     try {
-      // Trigger Google Sign In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
 
-      // Obtain auth details
       final GoogleSignInAuthentication googleAuth =
       await googleUser.authentication;
 
-      // Create Firebase credential
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase
       final UserCredential userCredential =
       await firebaseAuth.signInWithCredential(credential);
 
-      // Check if user exists in Firestore
       DocumentSnapshot userDoc = await firebaseFirestore
           .collection('users')
           .doc(userCredential.user!.uid)
           .get();
 
-      // Create new user if doesn't exist
       if (!userDoc.exists) {
         final newUser = AppUser(
           uid: userCredential.user!.uid,
@@ -112,16 +100,13 @@ class FirebaseAuthRepo implements AuthRepo {
             .doc(newUser.uid)
             .set(newUser.toJson());
 
-        // Update FCM token after successful Google sign-in
         await updateUserFCMToken();
 
         return newUser;
       }
 
-      // Return existing user
       final userData = userDoc.data() as Map<String, dynamic>;
 
-      // Update FCM token after successful Google sign-in
       await updateUserFCMToken();
 
       return AppUser(
@@ -138,20 +123,16 @@ class FirebaseAuthRepo implements AuthRepo {
   @override
   Future<void> logout() async {
     try {
-      // Get current user before logging out
       final currentUser = firebaseAuth.currentUser;
       if (currentUser != null) {
-        // Clean up FCM token
         await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).update({
           'fcmToken': FieldValue.delete(),
           'fcmTokenUpdated': FieldValue.delete(),
         });
       }
 
-      // Sign out from Firebase
       await firebaseAuth.signOut();
 
-      // Sign out from Google if signed in with Google
       await _googleSignIn.signOut();
     } catch (e) {
       print('Error during logout: $e');
@@ -185,7 +166,7 @@ class FirebaseAuthRepo implements AuthRepo {
     return AppUser(
       uid: firebaseUser.uid,
       email: firebaseUser.email!,
-      name: userData['name'] ?? 'No Name', // Fallback value
+      name: userData['name'] ?? 'No Name',
       isAdmin: userData['isAdmin'] ?? false,
     );
   }
@@ -205,7 +186,6 @@ class FirebaseAuthRepo implements AuthRepo {
       final user = firebaseAuth.currentUser;
       if (user == null) return;
 
-      // Request permission for notifications
       final messaging = FirebaseMessaging.instance;
       await messaging.requestPermission(
         alert: true,
@@ -213,7 +193,6 @@ class FirebaseAuthRepo implements AuthRepo {
         sound: true,
       );
 
-      // Get FCM token
       final token = await messaging.getToken();
       if (token != null) {
         await firebaseFirestore.collection('users').doc(user.uid).update({
@@ -223,7 +202,6 @@ class FirebaseAuthRepo implements AuthRepo {
         print('FCM Token updated: $token');
       }
 
-      // Handle token refresh
       messaging.onTokenRefresh.listen((newToken) async {
         await firebaseFirestore.collection('users').doc(user.uid).update({
           'fcmToken': newToken,

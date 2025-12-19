@@ -107,7 +107,6 @@ class HomeCategoryCard extends StatelessWidget {
     );
   }
 
-  // Helper method to get image URL from storage path
   Future<String> _getImageUrl(String imagePath) async {
     return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
   }

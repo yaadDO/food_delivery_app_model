@@ -3,7 +3,6 @@ import 'package:food_delivery/features/promo/domain/repository/promo_repo.dart';
 import 'package:food_delivery/features/search/domain/entities/search_item.dart';
 import 'package:food_delivery/features/search/domain/repository/search_repo.dart';
 
-
 class FirebaseSearchRepo implements SearchRepo {
   final CatalogRepo catalogRepo;
   final PromoRepo promoRepo;

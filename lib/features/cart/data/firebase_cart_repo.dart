@@ -111,8 +111,8 @@ class FirebaseCartRepo implements CartRepo {
       String address,
       String paymentMethod, {
         String? paymentReference,
-        String? deliveryOption = 'delivery', // Add delivery option
-        double deliveryFee = 0.0, // Add delivery fee
+        String? deliveryOption = 'delivery',
+        double deliveryFee = 0.0,
       }) async {
     try {
       final orderDoc = _firestore.collection('orders').doc();

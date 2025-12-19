@@ -79,7 +79,6 @@ class _CartItemCardState extends State<CartItemCard> {
       ),
       child: Row(
         children: [
-          // Image section
           ClipRRect(
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(12),
@@ -133,7 +132,6 @@ class _CartItemCardState extends State<CartItemCard> {
             ),
           ),
 
-          // Item details
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -163,7 +161,6 @@ class _CartItemCardState extends State<CartItemCard> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Quantity controls
                       Container(
                         decoration: BoxDecoration(
                           color: Colors.green,

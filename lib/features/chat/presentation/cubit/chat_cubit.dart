@@ -8,12 +8,10 @@ class ChatCubit extends Cubit<ChatState> {
   ChatCubit(this.chatRepo) : super(ChatInitial());
 
   Future<void> sendMessage(String userId, String text, bool isAdmin) async {
-    // No state emission here - just forward to repo
     return chatRepo.sendMessage(userId, text, isAdmin);
   }
 
   Future<void> markMessagesAsRead(String userId) async {
-    // No state emission here
     return chatRepo.markMessagesAsRead(userId);
   }
 

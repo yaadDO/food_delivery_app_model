@@ -13,7 +13,6 @@ class CartItem {
     required this.imagePath,
   });
 
-  // Add copyWith for immutable updates
   CartItem copyWith({
     String? itemId,
     String? name,

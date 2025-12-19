@@ -3,7 +3,6 @@ import '../../../payments/payment_settings.dart';
 import '../../../settings/data/firebase_settings_repo.dart';
 import '../../domain/entities/cart_item.dart';
 
-/// Handles business logic for the cart page
 class CartViewModel extends ChangeNotifier {
   final FirebaseSettingsRepo settingsRepo;
 
@@ -33,7 +32,6 @@ class CartViewModel extends ChangeNotifier {
         }
       }
     } catch (e) {
-      // Fallback to default settings
       _paymentSettings = PaymentSettings(
         allowCashOnDelivery: true,
         allowPaystack: true,

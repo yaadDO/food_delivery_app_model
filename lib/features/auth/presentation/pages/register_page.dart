@@ -146,7 +146,7 @@ class _RegisterPageState extends State<RegisterPage>
                     return MyButton(
                       onTap: state is AuthLoading ? null : register,
                       text: 'Register',
-                      isLoading: state is AuthLoading, // Added
+                      isLoading: state is AuthLoading,
                     );
                   },
                 ),

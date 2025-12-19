@@ -41,7 +41,6 @@ class ItemCard extends StatelessWidget {
                 child: FutureBuilder<String>(
                   future: _getImageUrl(item.imagePath),
                   builder: (context, snapshot) {
-                    // Handle different states
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return Container(
                         color: Colors.grey[200],

@@ -18,7 +18,6 @@ class _AdminCatalogScreenState extends State<AdminCatalogScreen> {
   @override
   void initState() {
     super.initState();
-    // Force load catalog when this screen is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final catalogCubit = BlocProvider.of<CatalogCubit>(context);
       catalogCubit.loadCategories();
@@ -50,7 +49,6 @@ class _AdminCatalogScreenState extends State<AdminCatalogScreen> {
           }
         },
         builder: (context, state) {
-          // Show loading when we're in CatalogLoading state
           if (state is CatalogLoading) {
             return const _LoadingGrid();
           }
@@ -121,7 +119,6 @@ class _AdminCatalogScreenState extends State<AdminCatalogScreen> {
             );
           }
 
-          // Initial state - show loading
           return const _LoadingGrid();
         },
       ),

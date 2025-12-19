@@ -48,22 +48,19 @@ class PaystackPaymentDialog extends StatelessWidget {
 
   Future<void> _processPayment(BuildContext context) async {
     try {
-      // For production, store these keys securely (use environment variables or backend)
-      const publicKey = 'pk_test_4ffd8832d059db8ef7d652f19ed4ec8225802ec4'; // Required for Web
-      const secretKey = 'sk_test_e0fcf076cb8e347af95ff515d35711b2ac1555f4'; // Required for Mobile
+      const publicKey = 'pk_test_4ffd8832d059db8ef7d652f19ed4ec8225802ec4';
+      const secretKey = 'sk_test_e0fcf076cb8e347af95ff515d35711b2ac1555f4';
 
       final reference = DateTime.now().millisecondsSinceEpoch.toString();
-      final amountInKobo = (amount * 100).toInt(); // Convert to kobo/cents
+      final amountInKobo = (amount * 100).toInt();
 
-      // Platform-specific configuration
       if (kIsWeb) {
-        // Web implementation
         await FlutterPaystackPlus.openPaystackPopup(
           publicKey: publicKey,
           customerEmail: userEmail,
           amount: amountInKobo.toString(),
           reference: reference,
-          currency: 'NGN', // Change to your currency (USD, GHS, etc.)
+          currency: 'NGN',
           onClosed: () {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +77,6 @@ class PaystackPaymentDialog extends StatelessWidget {
           },
         );
       } else {
-        // Mobile implementation (Android/iOS)
         await FlutterPaystackPlus.openPaystackPopup(
           customerEmail: userEmail,
           context: context, // Required for mobile
@@ -88,7 +84,7 @@ class PaystackPaymentDialog extends StatelessWidget {
           amount: amountInKobo.toString(),
           reference: reference,
           currency: 'ZAR',
-          callBackUrl: "https://standard.paystack.co/close", // Use Paystack's close URL or your own
+          callBackUrl: "https://standard.paystack.co/close",
           onClosed: () {
             Navigator.pop(context);
             ScaffoldMessenger.of(context).showSnackBar(

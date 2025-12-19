@@ -68,8 +68,6 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 }
-
-// New widget that forces refresh when catalog tab is selected
 class _CatalogPageWithRefresh extends StatefulWidget {
   @override
   State<_CatalogPageWithRefresh> createState() => _CatalogPageWithRefreshState();
@@ -81,7 +79,6 @@ class _CatalogPageWithRefreshState extends State<_CatalogPageWithRefresh> {
   @override
   void initState() {
     super.initState();
-    // Load catalog data immediately when this tab is created
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadCatalog();
     });
@@ -99,7 +96,6 @@ class _CatalogPageWithRefreshState extends State<_CatalogPageWithRefresh> {
 
   @override
   Widget build(BuildContext context) {
-    // Force reload catalog when this widget is built
     if (!_hasLoaded) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadCatalog();

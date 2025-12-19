@@ -73,7 +73,7 @@ class HomePage extends StatelessWidget {
           BlocBuilder<ProfileCubit, ProfileState>(
             builder: (context, state) {
               final greeting = _getGreeting();
-              String userName = 'Beautiful'; // Default name
+              String userName = 'Beautiful';
 
               if (state is ProfileLoaded) {
                 userName = state.profileUser.name.isNotEmpty

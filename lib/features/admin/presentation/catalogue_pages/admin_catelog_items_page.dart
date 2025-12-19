@@ -22,7 +22,6 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
   @override
   void initState() {
     super.initState();
-    // Force load items when page opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadCategoryItems();
     });
@@ -35,7 +34,6 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
       _isInitialLoad = false;
     });
 
-    // Force the cubit to load fresh data
     await BlocProvider.of<CatalogCubit>(context).loadCategories();
   }
 
@@ -66,7 +64,6 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
       ),
       body: BlocBuilder<CatalogCubit, CatalogState>(
         builder: (context, state) {
-          // Show loading initially
           if (_isInitialLoad) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -94,7 +91,7 @@ class _AdminCategoryItemsPageState extends State<AdminCategoryItemsPage> {
           }
 
           if (state is CatalogDataLoaded) {
-            // Get items from allItems that belong to this category
+
             final categoryItems = state.allItems.where(
                   (item) => item.categoryId == widget.categoryId,
             ).toList();

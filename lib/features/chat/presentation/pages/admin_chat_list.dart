@@ -15,7 +15,6 @@ class AdminChatList extends StatefulWidget {
 class _AdminChatListState extends State<AdminChatList> {
   bool _showHelpMessage = true;
 
-  // Prewritten help message
   final String _helpMessage =
       "💬 Chat Center\n\n"
       "• View all customer conversations\n"
@@ -28,7 +27,6 @@ class _AdminChatListState extends State<AdminChatList> {
   void initState() {
     super.initState();
 
-    // Auto-hide the help message after 5 seconds
     Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
         setState(() {
@@ -46,7 +44,6 @@ class _AdminChatListState extends State<AdminChatList> {
         elevation: 4,
         shadowColor: Colors.black26,
         actions: [
-          // Optional: Add a help button to show message again
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: () {
@@ -54,7 +51,6 @@ class _AdminChatListState extends State<AdminChatList> {
                 _showHelpMessage = true;
               });
 
-              // Auto-hide after 5 seconds
               Future.delayed(const Duration(seconds: 5), () {
                 if (mounted) {
                   setState(() {
@@ -209,7 +205,6 @@ class _AdminChatListState extends State<AdminChatList> {
             },
           ),
 
-          // Help message overlay
           if (_showHelpMessage)
             Positioned(
               top: 16,
@@ -220,7 +215,6 @@ class _AdminChatListState extends State<AdminChatList> {
         ],
       ),
 
-      // Optional: Floating help button as alternative
      /* floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           setState(() {

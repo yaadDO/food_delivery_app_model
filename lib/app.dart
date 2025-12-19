@@ -88,7 +88,7 @@ class _MyAppState extends State<MyApp> {
       child: BlocBuilder<ThemeCubit, ThemeData>(
         builder: (context, currentTheme) => MaterialApp(
           debugShowCheckedModeBanner: false,
-          navigatorKey: navigatorKey, // Add navigatorKey here
+          navigatorKey: navigatorKey,
           theme: currentTheme,
           home: BlocConsumer<AuthCubit, AuthState>(
             builder: (context, authState) {
@@ -108,12 +108,10 @@ class _MyAppState extends State<MyApp> {
                 final currentUserId = context.read<AuthCubit>().currentUser!.uid;
                 context.read<ProfileCubit>().fetchUserProfile(currentUserId);
 
-                // Reset notifications when a new user authenticates
                 context.read<NotificationsCubit>().reset();
 
                 navigatorKey.currentState?.popUntil((route) => route.isFirst);
               } else if (state is Unauthenticated) {
-                // Reset notifications when user logs out
                 context.read<NotificationsCubit>().reset();
                 navigatorKey.currentState?.popUntil((route) => route.isFirst);
               }

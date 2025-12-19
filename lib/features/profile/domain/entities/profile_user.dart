@@ -1,4 +1,3 @@
-//This class extends the AppUser class and represents a user's profile with additional information such as bio, profile image URL, followers, and following.
 import '../../../auth/domain/entities/app_user.dart';
 
 class ProfileUser extends AppUser {

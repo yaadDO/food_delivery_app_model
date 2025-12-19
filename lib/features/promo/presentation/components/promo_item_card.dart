@@ -1,7 +1,7 @@
 import 'package:badges/badges.dart' as badges;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // Add this import
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:food_delivery/features/promo/domain/entities/promo_item.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -33,9 +33,8 @@ class PromoItemCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // UPDATED IMAGE SECTION - FILLS ENTIRE CARD
               AspectRatio(
-                aspectRatio: 1, // Square aspect ratio
+                aspectRatio: 1,
                 child: FutureBuilder<String>(
                   future: _getImageUrl(item.imagePath),
                   builder: (context, snapshot) {
@@ -45,7 +44,7 @@ class PromoItemCard extends StatelessWidget {
                           tag: item.id,
                           child: CachedNetworkImage(
                             imageUrl: snapshot.data!,
-                            fit: BoxFit.cover, // Fills entire space
+                            fit: BoxFit.cover,
                             placeholder: (context, url) => Container(
                               color: Colors.grey[200],
                               child: const Center(child: CircularProgressIndicator()),

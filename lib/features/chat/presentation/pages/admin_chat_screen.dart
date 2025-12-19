@@ -28,10 +28,8 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
   @override
   void initState() {
     super.initState();
-    // Get the stream once and cache it
     _messageStream = context.read<ChatCubit>().getMessages(widget.userId);
 
-    // Mark messages as read when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ChatCubit>().markMessagesAsRead(widget.userId);
     });
@@ -39,7 +37,6 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
 
   Stream<List<Map<String, dynamic>>> _getSafeStream() {
     return _messageStream!.asyncMap((messages) async {
-      // Check if we need to remove pending message
       if (_pendingMessageId != null) {
         final now = DateTime.now();
         for (final message in messages) {
@@ -48,15 +45,13 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
             final messageTime = timestamp.toDate();
             final timeDiff = now.difference(messageTime).inSeconds;
 
-            // If we find a message with the same text that was sent recently (within 3 seconds)
             if (message['text'] == _pendingMessageText &&
                 timeDiff < 3 &&
                 message['sender'] == 'admin') {
-              // Found the real message, clear pending AND reset sending state
               setState(() {
                 _pendingMessageText = null;
                 _pendingMessageId = null;
-                _isSending = false; // RESET THE SENDING STATE HERE
+                _isSending = false;
               });
               break;
             }
@@ -66,7 +61,6 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
 
       return messages;
     }).handleError((error) {
-      // When there's an error, return the cached messages
       return _cachedMessages;
     });
   }
@@ -131,25 +125,21 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _getSafeStream(),
       builder: (context, snapshot) {
-        // Update cache when we get new data
         if (snapshot.hasData) {
           _cachedMessages = snapshot.data!;
         }
 
         if (snapshot.hasError) {
-          // Should never reach here due to error handling, but just in case
           print('Stream error: ${snapshot.error}');
         }
 
         List<Map<String, dynamic>> messages = snapshot.hasData ? snapshot.data! : _cachedMessages;
 
-        // Remove any message that matches our pending message text
-        // to avoid showing both pending and real message
         if (_pendingMessageText != null) {
           messages = messages.where((msg) =>
           msg['text'] != _pendingMessageText ||
               msg['sender'] != 'admin' ||
-              (msg['isPending'] == true) // Keep if it's marked as pending
+              (msg['isPending'] == true)
           ).toList();
         }
 
@@ -161,13 +151,11 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // Group messages by date
         final Map<String, List<Map<String, dynamic>>> groupedMessages = {};
 
         for (var message in messages) {
           if (message == null) continue;
 
-          // get timestamp from Firestore Timestamp to DateTime
           final timestamp = message['timestamp'];
           if (timestamp == null) continue;
 
@@ -178,28 +166,23 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
           groupedMessages[dateKey]!.add(message);
         }
 
-        // Sort date keys OLD → NEW (oldest first)
         final sortedDates = groupedMessages.keys.toList()
-          ..sort((a, b) => a.compareTo(b)); // ascending sort: oldest first
+          ..sort((a, b) => a.compareTo(b));
 
-        // Build UI widgets
         final List<Widget> messageWidgets = [];
 
         for (final dateKey in sortedDates) {
           final dayMessages = groupedMessages[dateKey]!;
 
-          // sort messages in that day by timestamp (oldest first)
           dayMessages.sort((a, b) {
             final DateTime aTime = a['timestamp'].toDate();
             final DateTime bTime = b['timestamp'].toDate();
             return aTime.compareTo(bTime);
           });
 
-          // parse date for header display
           final DateTime headerDate = DateTime.parse(dateKey);
-          messageWidgets.add(_buildDateHeader(headerDate)); // date header ABOVE messages
+          messageWidgets.add(_buildDateHeader(headerDate));
 
-          // add messages for this day (in sorted order)
           for (final message in dayMessages) {
             messageWidgets.add(
               _buildMessageBubble(message, context),
@@ -207,7 +190,6 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
           }
         }
 
-        // Add pending message at the end if it exists
         if (_pendingMessageText != null) {
           messageWidgets.add(_buildPendingMessage());
         }
@@ -224,7 +206,6 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
     );
   }
 
-  // Build WhatsApp-style date header (placed at the TOP of messages for that day)
   Widget _buildDateHeader(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -237,10 +218,9 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
     } else if (messageDate == today.subtract(const Duration(days: 1))) {
       dateText = 'Yesterday';
     } else if (messageDate.year == now.year) {
-      // Same year, show day and month in uppercase
-      dateText = DateFormat('dd MMM').format(date).toUpperCase(); // "15 JAN"
+      dateText = DateFormat('dd MMM').format(date).toUpperCase();
     } else {
-      // Different year, show full date with year
+
       dateText = DateFormat('dd MMM yyyy').format(date).toUpperCase();
     }
 
@@ -273,7 +253,6 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          // Icon for admin (customer/support agent on LEFT)
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -359,7 +338,6 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
         mainAxisAlignment: isAdminMessage ? MainAxisAlignment.start : MainAxisAlignment.end,
         children: [
           if (isAdminMessage) ...[
-            // Icon for admin messages (customer/support agent on LEFT)
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -419,7 +397,6 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                // REMOVED ALL CHECK MARK ICONS - ONLY TIMESTAMP REMAINS
                 Text(
                   _formatTimestamp(message['timestamp']),
                   style: TextStyle(
@@ -432,7 +409,6 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
           ),
           if (!isAdminMessage) ...[
             const SizedBox(width: 8),
-            // Icon for user messages (person icon on RIGHT)
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -525,12 +501,8 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
     });
 
     try {
-      // Send message without waiting for ChatCubit state
       await context.read<ChatCubit>().sendMessage(widget.userId, text, true);
       _controller.clear();
-
-      // Set a timeout to reset the sending state if it takes too long
-      // This is a safety net in case the stream doesn't update properly
       Future.delayed(const Duration(seconds: 5), () {
         if (mounted && _isSending) {
           setState(() {
@@ -541,14 +513,12 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
         }
       });
     } catch (e) {
-      // Show error but don't crash the UI
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to send: $e'),
           backgroundColor: Colors.red,
         ),
       );
-      // Reset the sending state on error
       setState(() {
         _pendingMessageText = null;
         _pendingMessageId = null;

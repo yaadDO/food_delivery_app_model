@@ -26,7 +26,6 @@ class WelcomeView extends StatelessWidget {
           child: Column(
             children: [
               SizedBox(height: size.height * 0.15),
-              // Logo with shadow and animation
               Animate(
                 effects: [ScaleEffect(duration: 500.ms)],
                 child: Container(
@@ -64,12 +63,11 @@ class WelcomeView extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white, // Base color (will be overridden)
+                    color: Colors.white,
                   ),
                 ),
               ).animate().fadeIn(duration: 500.ms),
               SizedBox(height: size.height * 0.02),
-              // Rest of the code remains the same...
               const Text(
                 'Savor the flavor, delivered to your door',
                 style: TextStyle(
@@ -117,7 +115,6 @@ class WelcomeView extends StatelessWidget {
                 ),
               ),
               SizedBox(height: size.height * 0.03),
-              // Register Button
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
                 child: ElevatedButton(

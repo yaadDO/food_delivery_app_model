@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // Add this import
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:food_delivery/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:food_delivery/features/cart/domain/entities/cart_item.dart';
 import 'package:food_delivery/features/cart/presentation/cubits/cart_cubit.dart';
@@ -151,7 +151,6 @@ class PromoItemDetailPage extends StatelessWidget {
     );
   }
 
-  // Helper method to get image URL from storage path
   Future<String> _getImageUrl(String imagePath) async {
     return await FirebaseStorage.instance.ref(imagePath).getDownloadURL();
   }

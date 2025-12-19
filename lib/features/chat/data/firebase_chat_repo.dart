@@ -8,27 +8,22 @@ class FirebaseChatRepo implements ChatRepo {
 
   @override
   Future<void> sendMessage(String userId, String text, bool isAdmin) async {
-    // Add the new message
     await _firestore.collection('chats').doc(userId).collection('messages').add({
       'text': text,
       'sender': isAdmin ? 'admin' : 'user',
       'timestamp': FieldValue.serverTimestamp(),
-      'read': isAdmin, // Admin messages are marked as read
+      'read': isAdmin,
     });
 
-    // Reference to the chat document
     final chatDocRef = _firestore.collection('chats').doc(userId);
 
     if (isAdmin) {
-      // Admin sending a message
-      // Update lastActive and lastMessage for the chat
       await chatDocRef.set({
         'lastActive': FieldValue.serverTimestamp(),
         'lastMessage': text,
-        'unread': 0, // Initialize unread to 0 for admin messages
+        'unread': 0,
       }, SetOptions(merge: true));
 
-      // Mark all user's unread messages as read
       final unreadMessages = await _firestore.collection('chats').doc(userId)
           .collection('messages')
           .where('sender', isEqualTo: 'user')
@@ -41,18 +36,15 @@ class FirebaseChatRepo implements ChatRepo {
       }
       await batch.commit();
     } else {
-      // User sending a message: increment unread count
-      // First, get the current unread count
       final chatDoc = await chatDocRef.get();
       final currentUnread = chatDoc.exists && chatDoc.data() != null
           ? (chatDoc.data()!['unread'] ?? 0)
           : 0;
 
-      // Update lastActive, lastMessage, and unread count
       await chatDocRef.set({
         'lastActive': FieldValue.serverTimestamp(),
         'lastMessage': text,
-        'unread': currentUnread + 1, // Explicitly set to current + 1
+        'unread': currentUnread + 1,
       }, SetOptions(merge: true));
     }
   }
@@ -76,7 +68,6 @@ class FirebaseChatRepo implements ChatRepo {
   Future<void> markMessagesAsRead(String userId) async {
     final chatDocRef = _firestore.collection('chats').doc(userId);
 
-    // Mark all user's unread messages as read
     final unreadMessages = await _firestore.collection('chats').doc(userId)
         .collection('messages')
         .where('sender', isEqualTo: 'user')
@@ -90,7 +81,6 @@ class FirebaseChatRepo implements ChatRepo {
       }
       await batch.commit();
 
-      // Reset unread count to 0
       await chatDocRef.set({
         'unread': 0,
       }, SetOptions(merge: true));
@@ -141,17 +131,15 @@ class FirebaseChatRepo implements ChatRepo {
 
   Future<void> _sendNotification(String userId, String message, bool isAdmin) async {
     try {
-      // Get user's FCM token from Firestore
+
       final userDoc = await _firestore.collection('users').doc(userId).get();
       final token = userDoc.data()?['fcmToken'];
 
       if (token == null) return;
 
-      // Determine notification content
       final title = isAdmin ? 'New Support Message' : 'Customer Message';
       final body = isAdmin ? message : 'You have a new customer message';
 
-      // Send notification via Firebase Functions (you'll need to create this endpoint)
       await _firestore.collection('notifications').add({
         'to': token,
         'notification': {

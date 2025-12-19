@@ -74,7 +74,7 @@ class _SearchResults extends StatelessWidget {
           subtitle: Text(item.description),
           trailing: Text('\$${item.price.toStringAsFixed(2)}'),
           onTap: () {
-            // Handle item tap
+          //implement item tap func.
           },
         );
       },

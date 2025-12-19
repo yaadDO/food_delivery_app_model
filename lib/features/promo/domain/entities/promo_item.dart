@@ -29,7 +29,6 @@ class PromoItem {
     };
   }
 
-  // Add fromJson factory constructor for easier deserialization
   factory PromoItem.fromJson(Map<String, dynamic> json) {
     return PromoItem(
       id: json['id'] ?? '',

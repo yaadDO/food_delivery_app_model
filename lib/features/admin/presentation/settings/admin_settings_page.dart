@@ -36,13 +36,12 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
           backgroundColor: Colors.red,
         ),
       );
-      // Use default settings on error with all required parameters
       _paymentSettings = PaymentSettings(
         allowCashOnDelivery: true,
         allowPaystack: true,
-        deliveryFeeEnabled: false,  // Added
-        deliveryFeeAmount: 5.0,     // Added
-        allowPickup: true,          // Added
+        deliveryFeeEnabled: false,
+        deliveryFeeAmount: 5.0,
+        allowPickup: true,
         lastUpdated: DateTime.now(),
       );
     } finally {
@@ -100,9 +99,8 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
                 style: TextStyle(color: Colors.red),
               ),
               onPressed: () {
-                // Just call logout - the BlocConsumer in app.dart will handle the navigation
                 context.read<AuthCubit>().logout();
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -138,7 +136,6 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
             const SizedBox(height: 20),
             _buildLastUpdatedInfo(),
             const SizedBox(height: 30),
-            // ADD A LOGOUT CARD SECTION
             _buildLogoutSection(context),
           ],
         ),
@@ -146,7 +143,6 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
     );
   }
 
-  // UPDATED: Simplified logout section
   Widget _buildLogoutSection(BuildContext context) {
     return Card(
       elevation: 2,
